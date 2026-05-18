@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import { InterestBadge } from '../../src/components/InterestBadge';
 import { PhotoStrip } from '../../src/components/PhotoStrip';
 import { TagChip } from '../../src/components/TagChip';
@@ -51,7 +51,7 @@ export default function ContactDetailScreen() {
 
   if (!contact) {
     return (
-      <SafeAreaView style={styles.flex} edges={['top']}>
+      <Screen style={styles.flex}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={10}>
             <Text style={styles.back}>‹ Back</Text>
@@ -60,7 +60,7 @@ export default function ContactDetailScreen() {
         <View style={styles.empty}>
           <Text style={styles.emptyText}>Contact not found.</Text>
         </View>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -87,7 +87,7 @@ export default function ContactDetailScreen() {
   const subtitleParts = [event?.name, contact.date_met ? formatDate(contact.date_met) : null].filter(Boolean);
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Text style={styles.back}>‹ Back</Text>
@@ -188,7 +188,7 @@ export default function ContactDetailScreen() {
           <Text style={styles.deleteText}>Delete contact</Text>
         </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import { createEvent } from '../../src/db/events';
 import { colors, radius, typography } from '../../src/theme';
 import { todayIso } from '../../src/utils/format';
@@ -55,7 +55,7 @@ export default function NewEventScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -98,7 +98,7 @@ export default function NewEventScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import { ContactCard } from '../../src/components/ContactCard';
 import { deleteEvent, getEvent, setActiveEvent, type EventRow } from '../../src/db/events';
 import { listContacts, type ContactListItem } from '../../src/db/contacts';
@@ -32,7 +32,7 @@ export default function EventDetailScreen() {
   useEffect(() => { void reload(); }, [reload]);
   useFocusEffect(useCallback(() => { void reload(); }, [reload]));
 
-  if (!event) return <SafeAreaView style={styles.flex} />;
+  if (!event) return <Screen style={styles.flex}><View /></Screen>;
 
   async function onExport() {
     try {
@@ -70,7 +70,7 @@ export default function EventDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Text style={styles.back}>‹ Back</Text>
@@ -119,7 +119,7 @@ export default function EventDetailScreen() {
           </Pressable>
         }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import { ActiveEventBanner } from '../../src/components/ActiveEventBanner';
 import { ContactCard } from '../../src/components/ContactCard';
 import { FAB } from '../../src/components/FAB';
@@ -36,7 +36,7 @@ export default function ContactsScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <ActiveEventBanner event={activeEvent} />
       <View style={styles.searchWrap}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -72,7 +72,7 @@ export default function ContactsScreen() {
         }
       />
       <FAB onPress={() => router.push('/contact/new')} />
-    </SafeAreaView>
+    </Screen>
   );
 }
 

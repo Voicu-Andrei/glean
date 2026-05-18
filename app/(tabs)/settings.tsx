@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import {
   createTag,
   deleteTag,
@@ -93,7 +93,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.screenTitle}>Settings</Text>
 
@@ -163,7 +163,7 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

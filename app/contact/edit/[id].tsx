@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../../src/components/Screen';
 import { InterestPicker } from '../../../src/components/InterestPicker';
 import { TagChip } from '../../../src/components/TagChip';
 import { getContact, updateContact } from '../../../src/db/contacts';
@@ -102,10 +102,10 @@ export default function EditContactScreen() {
     );
   }
 
-  if (loading) return <SafeAreaView style={styles.flex} />;
+  if (loading) return <Screen style={styles.flex}><View /></Screen>;
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -175,7 +175,7 @@ export default function EditContactScreen() {
           </Field>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

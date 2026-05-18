@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { getDb } from '../src/db';
 import { colors } from '../src/theme';
 
@@ -43,7 +42,7 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
+    <>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" />
@@ -53,7 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="event/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="event/[id]" />
       </Stack>
-    </SafeAreaProvider>
+    </>
   );
 }
 

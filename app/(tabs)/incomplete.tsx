@@ -1,6 +1,6 @@
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import { ContactCard } from '../../src/components/ContactCard';
 import { useContacts } from '../../src/hooks/useContacts';
 import { missingFields } from '../../src/db/contacts';
@@ -11,7 +11,7 @@ export default function IncompleteScreen() {
   const { data, loading } = useContacts({ only_incomplete: true, sort: 'date_met_desc' });
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <View style={styles.header}>
         <Text style={styles.title}>Complete Your Contacts</Text>
         <Text style={styles.subtitle}>
@@ -50,7 +50,7 @@ export default function IncompleteScreen() {
           ) : null
         }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 

@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import * as ImagePicker from 'expo-image-picker';
 import { InterestPicker } from '../../src/components/InterestPicker';
 import { useActiveEvent } from '../../src/hooks/useActiveEvent';
@@ -78,7 +78,7 @@ export default function NewContactScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -214,7 +214,7 @@ export default function NewContactScreen() {
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

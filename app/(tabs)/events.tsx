@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Screen } from '../../src/components/Screen';
 import { useEvents } from '../../src/hooks/useEvents';
 import { colors, radius, shadow, typography } from '../../src/theme';
 import { formatDateRange } from '../../src/utils/format';
@@ -14,7 +14,7 @@ export default function EventsScreen() {
   const past = data.filter((e) => e.is_active === 0);
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen style={styles.flex}>
       <View style={styles.header}>
         <Text style={styles.title}>Events</Text>
         <Pressable onPress={() => router.push('/event/new')}>
@@ -45,7 +45,7 @@ export default function EventsScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
