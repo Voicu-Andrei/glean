@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { enableScreens } from 'react-native-screens';
 import { getDb } from '../src/db';
 import { colors } from '../src/theme';
+
+enableScreens(false);
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);

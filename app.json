@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "glean",
-    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -34,6 +33,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-router",
       [
         "expo-image-picker",
         {
@@ -41,6 +41,9 @@
           "cameraPermission": "Glean uses the camera to capture business cards and booth photos at trade fairs."
         }
       ]
-    ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }
