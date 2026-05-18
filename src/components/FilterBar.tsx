@@ -230,20 +230,20 @@ function PickerRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 6, paddingHorizontal: 14, paddingVertical: 4 },
+  row: { flexDirection: 'row', gap: 4, paddingHorizontal: 14, paddingVertical: 2 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    gap: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   chipActive: { borderColor: colors.primary, backgroundColor: colors.primary },
-  chipLabel: { fontSize: 12, fontWeight: '500', color: colors.textPrimary },
+  chipLabel: { fontSize: 11, fontWeight: '500', color: colors.textPrimary },
   chipLabelActive: { color: colors.surface },
   chevron: { fontSize: 9, color: colors.textSecondary },
   backdrop: {

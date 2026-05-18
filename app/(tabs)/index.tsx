@@ -43,8 +43,8 @@ export default function ContactsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search…"
-          placeholderTextColor={colors.textSecondary}
+          placeholder="*** UPDATED v3 — search ***"
+          placeholderTextColor="#FFFFFFCC"
           style={styles.searchInput}
           autoCorrect={false}
           autoCapitalize="none"
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: '#FF3B30',
     borderRadius: 10,
     marginHorizontal: 14,
     marginTop: 8,
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     gap: 6,
   },
-  searchIcon: { fontSize: 13 },
-  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: 6 },
+  searchIcon: { fontSize: 13, color: '#FFFFFF' },
+  searchInput: { flex: 1, fontSize: 15, color: '#FFFFFF', paddingVertical: 6 },
   listContent: { padding: 14, paddingTop: 4, paddingBottom: 100 },
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyTitle: { ...typography.companyList, color: colors.textPrimary, marginBottom: 6 },
