@@ -70,8 +70,8 @@ export default function ContactsScreen() {
               <View style={styles.emptyIconWrap}>
                 <Icon name="people-outline" size={36} color={colors.textTertiary} />
               </View>
-              <Text style={styles.emptyTitle}>No contacts yet</Text>
-              <Text style={styles.emptyBody}>Tap the + button to capture your first contact.</Text>
+              <Text style={styles.emptyTitle}>Ready when you are</Text>
+              <Text style={styles.emptyBody}>Tap + to capture your first contact at the booth.</Text>
             </View>
           ) : null
         }

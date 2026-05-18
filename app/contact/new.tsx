@@ -14,6 +14,8 @@ import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import * as ImagePicker from 'expo-image-picker';
 import { InterestPicker } from '../../src/components/InterestPicker';
+import { ActiveEventBanner } from '../../src/components/ActiveEventBanner';
+import { Icon } from '../../src/components/Icon';
 import { useActiveEvent } from '../../src/hooks/useActiveEvent';
 import { createContact } from '../../src/db/contacts';
 import { addPhoto } from '../../src/db/photos';
@@ -87,17 +89,13 @@ export default function NewContactScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={10}>
-            <Text style={styles.headerClose}>✕</Text>
+          <Pressable onPress={() => router.back()} hitSlop={10} style={{ width: 30 }}>
+            <Icon name="close" size={26} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>New Contact</Text>
-          <View style={{ width: 28 }} />
+          <View style={{ width: 30 }} />
         </View>
-        <View style={styles.banner}>
-          <Text style={styles.bannerText} numberOfLines={1}>
-            📍 {activeEvent ? activeEvent.name : 'No active event'}
-          </Text>
-        </View>
+        <ActiveEventBanner event={activeEvent} />
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Field label="Company Name *">
@@ -139,8 +137,13 @@ export default function NewContactScreen() {
           </Field>
 
           <Pressable onPress={() => void captureCard()} style={styles.cardBtn}>
+            <Icon
+              name={pendingPhotoUri ? 'checkmark-circle' : 'camera-outline'}
+              size={20}
+              color={colors.primary}
+            />
             <Text style={styles.cardBtnLabel}>
-              {pendingPhotoUri ? '✓ Business card captured · Retake' : '📷  Scan Business Card'}
+              {pendingPhotoUri ? 'Business card captured — retake' : 'Scan Business Card'}
             </Text>
           </Pressable>
 
@@ -208,14 +211,17 @@ export default function NewContactScreen() {
             </>
           )}
 
+          <View style={{ height: 24 }} />
+        </ScrollView>
+        <View style={styles.saveBar}>
           <Pressable
             onPress={() => void onSave()}
             disabled={saving}
             style={[styles.saveBtn, saving && { opacity: 0.6 }]}
           >
-            <Text style={styles.saveLabel}>SAVE</Text>
+            <Text style={styles.saveLabel}>Save Contact</Text>
           </Pressable>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -239,15 +245,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  headerClose: { fontSize: 22, color: colors.textPrimary, width: 28 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
-  banner: {
-    backgroundColor: colors.background,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  bannerText: { fontSize: 13, color: colors.textSecondary },
-  scroll: { padding: 16, paddingBottom: 60 },
+  scroll: { padding: 16, paddingTop: 14, paddingBottom: 60 },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -260,24 +259,32 @@ const styles = StyleSheet.create({
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
   cardBtn: {
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
     borderRadius: radius.card,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
     marginBottom: 14,
   },
   cardBtnLabel: { color: colors.primary, fontSize: 15, fontWeight: '600' },
   disclosure: { paddingVertical: 8, marginBottom: 8 },
   disclosureLabel: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  saveBar: {
+    backgroundColor: colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSoft,
+  },
   saveBtn: {
     backgroundColor: colors.primary,
     borderRadius: radius.card,
-    paddingVertical: 16,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 8,
-    ...elevation.card,
+    ...elevation.fab,
   },
-  saveLabel: { color: colors.surface, fontSize: 16, fontWeight: '700', letterSpacing: 1 },
+  saveLabel: { color: colors.surface, fontSize: 16, fontWeight: '700' },
 });

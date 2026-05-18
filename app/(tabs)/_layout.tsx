@@ -46,8 +46,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="incomplete"
         options={{
-          title: 'To Finish',
-          tabBarIcon: tabIcon('alert-circle', 'alert-circle-outline'),
+          title: 'Drafts',
+          tabBarIcon: tabIcon('create', 'create-outline'),
           tabBarBadge: count > 0 ? count : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.accent,

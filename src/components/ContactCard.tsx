@@ -111,12 +111,12 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   company: { ...typography.companyList, color: colors.textPrimary, flex: 1 },
   incompletePill: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     backgroundColor: colors.warmTint,
     borderRadius: radius.xs,
   },
-  incompleteText: { fontSize: 9, fontWeight: '700', color: colors.accent, letterSpacing: 0.5 },
+  incompleteText: { fontSize: 10, fontWeight: '700', color: colors.accent, letterSpacing: 0.5 },
   contactLine: { ...typography.body, color: colors.textSecondary, marginTop: 3 },
   metaRow: {
     flexDirection: 'row',
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   metaInline: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
   metaText: { ...typography.tertiary, flex: 1 },
-  dateChip: { ...typography.caption, color: colors.textTertiary, fontWeight: '500' },
+  dateChip: { ...typography.caption, color: colors.textSecondary, fontWeight: '600' },
   tagRow: { flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' },
   tagPill: {
     backgroundColor: colors.backgroundSoft,

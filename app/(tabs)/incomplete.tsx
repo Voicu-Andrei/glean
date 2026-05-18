@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ContactCard } from '../../src/components/ContactCard';
+import { Icon } from '../../src/components/Icon';
 import { useContacts } from '../../src/hooks/useContacts';
 import { missingFields } from '../../src/db/contacts';
 import { colors, typography } from '../../src/theme';
@@ -43,7 +44,9 @@ export default function IncompleteScreen() {
         ListEmptyComponent={
           !loading ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>✓</Text>
+              <View style={styles.emptyIconWrap}>
+                <Icon name="checkmark-circle" size={48} color={colors.success} />
+              </View>
               <Text style={styles.emptyTitle}>All caught up</Text>
               <Text style={styles.emptyBody}>Every contact has what it needs.</Text>
             </View>
@@ -60,8 +63,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
   subtitle: { ...typography.secondary, marginTop: 2 },
   listContent: { padding: 14, paddingBottom: 60 },
-  empty: { alignItems: 'center', paddingTop: 100 },
-  emptyIcon: { fontSize: 48, color: colors.primary },
+  empty: { alignItems: 'center', paddingTop: 90, paddingHorizontal: 32 },
+  emptyIconWrap: {
+    width: 88, height: 88, borderRadius: 44,
+    backgroundColor: '#E8F3E8',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+  },
   emptyTitle: { ...typography.companyList, color: colors.textPrimary, marginTop: 12 },
   emptyBody: { ...typography.secondary, marginTop: 4 },
 });

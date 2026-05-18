@@ -11,6 +11,7 @@ import { colors, radius } from '../theme';
 import type { InterestLevel } from '../theme';
 import { listEvents, type EventWithCount } from '../db/events';
 import { listTags, type TagRow } from '../db/tags';
+import { Icon } from './Icon';
 
 export type SortKey = 'date_met_desc' | 'company_asc' | 'interest';
 
@@ -175,11 +176,12 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
     <Pressable
       onPress={onPress}
       style={[styles.chip, active && styles.chipActive]}
+      hitSlop={6}
     >
       <Text style={[styles.chipLabel, active && styles.chipLabelActive]} numberOfLines={1}>
         {label}
       </Text>
-      <Text style={[styles.chevron, active && styles.chipLabelActive]}>⌄</Text>
+      <Icon name="chevron-down" size={12} color={active ? colors.primary : colors.textTertiary} />
     </Pressable>
   );
 }
@@ -230,22 +232,21 @@ function PickerRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
+  row: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingVertical: 10 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipActive: { borderColor: colors.primary, backgroundColor: colors.primary },
-  chipLabel: { fontSize: 12, fontWeight: '600', color: colors.textPrimary, letterSpacing: 0.1 },
-  chipLabelActive: { color: colors.surface },
-  chevron: { fontSize: 11, color: colors.textTertiary, marginTop: -2 },
+  chipActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  chipLabel: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, letterSpacing: 0.1 },
+  chipLabelActive: { color: colors.primary },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

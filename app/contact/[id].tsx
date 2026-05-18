@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
+import { Icon, type IconName } from '../../src/components/Icon';
 import { InterestBadge } from '../../src/components/InterestBadge';
 import { PhotoStrip } from '../../src/components/PhotoStrip';
 import { TagChip } from '../../src/components/TagChip';
@@ -55,7 +56,7 @@ export default function ContactDetailScreen() {
       <Screen style={styles.flex}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} hitSlop={10}>
-            <Text style={styles.back}>‹ Back</Text>
+            <Icon name="chevron-back" size={24} color={colors.primary} />
           </Pressable>
         </View>
         <View style={styles.empty}>
@@ -88,11 +89,21 @@ export default function ContactDetailScreen() {
   const interestLabel = contact.interest_level ? interestMeta[contact.interest_level].label.toUpperCase() : 'NO INTEREST';
   const subtitleParts = [event?.name, contact.date_met ? formatDate(contact.date_met) : null].filter(Boolean);
 
+  const websiteUrl = contact.website
+    ? (contact.website.match(/^https?:\/\//) ? contact.website : `https://${contact.website}`)
+    : null;
+
+  const actions = [
+    contact.phone ? { icon: 'call' as IconName, label: 'Call', onPress: () => void Linking.openURL(`tel:${contact.phone}`) } : null,
+    contact.email ? { icon: 'mail' as IconName, label: 'Email', onPress: () => void Linking.openURL(`mailto:${contact.email}`) } : null,
+    websiteUrl ? { icon: 'globe-outline' as IconName, label: 'Web', onPress: () => void Linking.openURL(websiteUrl!) } : null,
+  ].filter(Boolean) as Array<{ icon: IconName; label: string; onPress: () => void }>;
+
   return (
     <Screen style={styles.flex}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text style={styles.back}>‹ Back</Text>
+        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backRow}>
+          <Icon name="chevron-back" size={26} color={colors.primary} />
         </Pressable>
         <Pressable
           onPress={() => router.push({ pathname: '/contact/edit/[id]', params: { id } })}
@@ -106,53 +117,51 @@ export default function ContactDetailScreen() {
         <Pressable onPress={() => void onInterest()} style={styles.interestHeader}>
           <InterestBadge level={contact.interest_level} size="md" />
           <Text style={styles.interestLabel}>{interestLabel}</Text>
+          <Text style={styles.interestHint}>Tap to change</Text>
         </Pressable>
         <Text style={styles.company}>{contact.company_name}</Text>
         {subtitleParts.length > 0 && (
           <Text style={styles.subtitle}>{subtitleParts.join(' · ')}</Text>
         )}
 
+        {actions.length > 0 && (
+          <View style={styles.actionRow}>
+            {actions.map((a) => (
+              <Pressable key={a.label} onPress={a.onPress} style={styles.actionBtn}>
+                <View style={styles.actionCircle}>
+                  <Icon name={a.icon} size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.actionLabel}>{a.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         <Section title="Media">
           <PhotoStrip contactId={id} photos={photos} onChange={() => void reload()} />
         </Section>
 
-        <Section title="Contact">
-          {contact.contact_name || contact.role ? (
-            <Row icon="👤" text={[contact.contact_name, contact.role].filter(Boolean).join(' · ')} />
-          ) : (
-            <Row icon="👤" text="No contact name" muted />
-          )}
-          {contact.phone && (
-            <Row
-              icon="📞"
-              text={contact.phone}
-              onPress={() => void Linking.openURL(`tel:${contact.phone}`)}
-            />
-          )}
-          {contact.email && (
-            <Row
-              icon="✉️"
-              text={contact.email}
-              onPress={() => void Linking.openURL(`mailto:${contact.email}`)}
-            />
-          )}
-        </Section>
+        {(contact.contact_name || contact.role || contact.phone || contact.email) && (
+          <Section title="Contact">
+            {(contact.contact_name || contact.role) && (
+              <Row
+                icon="person-outline"
+                text={[contact.contact_name, contact.role].filter(Boolean).join(' · ')}
+              />
+            )}
+            {contact.phone && (
+              <Row icon="call-outline" text={contact.phone} />
+            )}
+            {contact.email && (
+              <Row icon="mail-outline" text={contact.email} />
+            )}
+          </Section>
+        )}
 
         {(contact.website || contact.what_they_sell) && (
           <Section title="Company">
-            {contact.website && (
-              <Row
-                icon="🌐"
-                text={contact.website}
-                onPress={() => {
-                  const url = contact.website!.match(/^https?:\/\//)
-                    ? contact.website!
-                    : `https://${contact.website}`;
-                  void Linking.openURL(url);
-                }}
-              />
-            )}
-            {contact.what_they_sell && <Row icon="🏷" text={contact.what_they_sell} />}
+            {contact.website && <Row icon="globe-outline" text={contact.website} />}
+            {contact.what_they_sell && <Row icon="pricetag-outline" text={contact.what_they_sell} />}
           </Section>
         )}
 
@@ -187,6 +196,7 @@ export default function ContactDetailScreen() {
         )}
 
         <Pressable onPress={onDelete} style={styles.deleteBtn}>
+          <Icon name="trash-outline" size={16} color={colors.danger} />
           <Text style={styles.deleteText}>Delete contact</Text>
         </Pressable>
       </ScrollView>
@@ -198,31 +208,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <View style={styles.section}>
       <Text style={typography.sectionLabel}>{title}</Text>
-      <View style={{ marginTop: 8 }}>{children}</View>
+      <View style={{ marginTop: 10 }}>{children}</View>
     </View>
   );
 }
 
-function Row({
-  icon,
-  text,
-  onPress,
-  muted,
-}: {
-  icon: string;
-  text: string;
-  onPress?: () => void;
-  muted?: boolean;
-}) {
-  const inner = (
+function Row({ icon, text }: { icon: IconName; text: string }) {
+  return (
     <View style={styles.rowItem}>
-      <Text style={styles.rowIcon}>{icon}</Text>
-      <Text style={[styles.rowText, muted && { color: colors.textSecondary }, onPress && { color: colors.primary }]}>
-        {text}
-      </Text>
+      <Icon name={icon} size={16} color={colors.textSecondary} />
+      <Text style={styles.rowText}>{text}</Text>
     </View>
   );
-  return onPress ? <Pressable onPress={onPress}>{inner}</Pressable> : inner;
 }
 
 const styles = StyleSheet.create({
@@ -231,16 +228,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  back: { fontSize: 16, color: colors.primary },
-  edit: { fontSize: 16, color: colors.primary, fontWeight: '600' },
+  backRow: { flexDirection: 'row', alignItems: 'center' },
+  edit: { fontSize: 16, color: colors.primary, fontWeight: '600', paddingHorizontal: 6 },
   scroll: { padding: 16, paddingBottom: 80 },
   interestHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  interestLabel: { fontSize: 13, fontWeight: '700', color: colors.textPrimary, letterSpacing: 0.5 },
-  company: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginTop: 4 },
+  interestLabel: { fontSize: 12, fontWeight: '700', color: colors.textPrimary, letterSpacing: 0.8 },
+  interestHint: { fontSize: 11, color: colors.textTertiary, marginLeft: 2 },
+  company: { ...typography.largeTitle, color: colors.textPrimary, marginTop: 6 },
   subtitle: { ...typography.secondary, marginTop: 4 },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 18,
+    marginTop: 18,
+    paddingHorizontal: 4,
+  },
+  actionBtn: { alignItems: 'center', gap: 6 },
+  actionCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionLabel: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   section: {
     backgroundColor: colors.surface,
     borderRadius: radius.card,
@@ -248,13 +262,19 @@ const styles = StyleSheet.create({
     marginTop: 16,
     ...elevation.card,
   },
-  rowItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  rowIcon: { fontSize: 16, width: 22 },
+  rowItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   rowText: { ...typography.body, color: colors.textPrimary, flex: 1 },
-  bodyText: { ...typography.body, color: colors.textPrimary },
+  bodyText: { ...typography.body, color: colors.textPrimary, lineHeight: 21 },
   muted: { ...typography.secondary },
   tagRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  deleteBtn: { marginTop: 28, padding: 14, alignItems: 'center' },
+  deleteBtn: {
+    marginTop: 32,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
   deleteText: { color: colors.danger, fontWeight: '600', fontSize: 14 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyText: { ...typography.secondary },
