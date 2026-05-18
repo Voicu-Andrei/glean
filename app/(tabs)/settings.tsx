@@ -17,7 +17,7 @@ import {
   type TagWithCount,
 } from '../../src/db/tags';
 import { exportContactsCsv } from '../../src/utils/export';
-import { colors, radius, shadow, typography } from '../../src/theme';
+import { colors, radius, elevation, typography } from '../../src/theme';
 
 export default function SettingsScreen() {
   const [tags, setTags] = useState<TagWithCount[]>([]);
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     padding: 14,
     marginTop: 8,
-    ...shadow.card,
+    ...elevation.card,
   },
   addRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   addInput: {

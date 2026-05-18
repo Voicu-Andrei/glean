@@ -17,7 +17,7 @@ import { TagChip } from '../../../src/components/TagChip';
 import { getContact, updateContact } from '../../../src/db/contacts';
 import { listEvents, type EventWithCount } from '../../../src/db/events';
 import { listTags, setContactTags, tagsForContact, type TagRow } from '../../../src/db/tags';
-import { colors, radius, shadow, typography, type InterestLevel } from '../../../src/theme';
+import { colors, radius, elevation, typography, type InterestLevel } from '../../../src/theme';
 
 export default function EditContactScreen() {
   const params = useLocalSearchParams<{ id: string }>();

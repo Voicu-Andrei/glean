@@ -1,13 +1,16 @@
 import { useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, shadow } from '../theme';
+import { Animated, Pressable, StyleSheet } from 'react-native';
+import { colors, elevation } from '../theme';
+import { tap } from '../utils/haptics';
+import { Icon, type IconName } from './Icon';
 
 type Props = {
   onPress: () => void;
+  icon?: IconName;
   label?: string;
 };
 
-export function FAB({ onPress, label = '+' }: Props) {
+export function FAB({ onPress, icon = 'add', label }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const animateTo = (value: number) =>
@@ -21,14 +24,17 @@ export function FAB({ onPress, label = '+' }: Props) {
   return (
     <Animated.View style={[styles.fabWrap, { transform: [{ scale }] }]}>
       <Pressable
-        onPress={onPress}
-        onPressIn={() => animateTo(0.92)}
+        onPress={() => {
+          tap();
+          onPress();
+        }}
+        onPressIn={() => animateTo(0.9)}
         onPressOut={() => animateTo(1)}
         style={styles.fab}
         accessibilityRole="button"
-        accessibilityLabel="Add contact"
+        accessibilityLabel={label ?? 'Add'}
       >
-        <Text style={styles.label}>{label}</Text>
+        <Icon name={icon} size={28} color={colors.surface} />
       </Pressable>
     </Animated.View>
   );
@@ -39,21 +45,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 24,
-    ...shadow.fab,
+    ...elevation.fab,
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  label: {
-    color: colors.surface,
-    fontSize: 28,
-    fontWeight: '300',
-    lineHeight: 30,
-    marginTop: -2,
   },
 });

@@ -22,8 +22,9 @@ import {
 import { getEvent, type EventRow } from '../../src/db/events';
 import { listPhotos, type PhotoRow } from '../../src/db/photos';
 import { tagsForContact, type TagRow } from '../../src/db/tags';
-import { colors, interestMeta, radius, shadow, typography } from '../../src/theme';
+import { colors, interestMeta, radius, elevation, typography } from '../../src/theme';
 import { formatDate } from '../../src/utils/format';
+import { select } from '../../src/utils/haptics';
 
 export default function ContactDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -65,6 +66,7 @@ export default function ContactDetailScreen() {
   }
 
   async function onInterest() {
+    select();
     await cycleInterest(id);
     await reload();
   }
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     padding: 14,
     marginTop: 16,
-    ...shadow.card,
+    ...elevation.card,
   },
   rowItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
   rowIcon: { fontSize: 16, width: 22 },

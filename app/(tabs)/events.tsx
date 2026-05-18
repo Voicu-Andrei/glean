@@ -2,7 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { useEvents } from '../../src/hooks/useEvents';
-import { colors, radius, shadow, typography } from '../../src/theme';
+import { colors, radius, elevation, typography } from '../../src/theme';
 import { formatDateRange } from '../../src/utils/format';
 import type { EventWithCount } from '../../src/db/events';
 
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     padding: 14,
     marginTop: 10,
-    ...shadow.card,
+    ...elevation.card,
   },
   cardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   activeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2E7D32', marginTop: 6 },

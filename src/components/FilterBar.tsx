@@ -179,7 +179,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
       <Text style={[styles.chipLabel, active && styles.chipLabelActive]} numberOfLines={1}>
         {label}
       </Text>
-      <Text style={[styles.chevron, active && styles.chipLabelActive]}>▾</Text>
+      <Text style={[styles.chevron, active && styles.chipLabelActive]}>⌄</Text>
     </Pressable>
   );
 }
@@ -230,22 +230,22 @@ function PickerRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 4, paddingHorizontal: 14, paddingVertical: 2 },
+  row: { flexDirection: 'row', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   chipActive: { borderColor: colors.primary, backgroundColor: colors.primary },
-  chipLabel: { fontSize: 11, fontWeight: '500', color: colors.textPrimary },
+  chipLabel: { fontSize: 12, fontWeight: '600', color: colors.textPrimary, letterSpacing: 0.1 },
   chipLabelActive: { color: colors.surface },
-  chevron: { fontSize: 9, color: colors.textSecondary },
+  chevron: { fontSize: 11, color: colors.textTertiary, marginTop: -2 },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

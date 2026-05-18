@@ -13,7 +13,7 @@ import { ContactCard } from '../../src/components/ContactCard';
 import { deleteEvent, getEvent, setActiveEvent, type EventRow } from '../../src/db/events';
 import { listContacts, type ContactListItem } from '../../src/db/contacts';
 import { exportContactsCsv } from '../../src/utils/export';
-import { colors, radius, shadow, typography } from '../../src/theme';
+import { colors, radius, elevation, typography } from '../../src/theme';
 import { formatDateRange } from '../../src/utils/format';
 
 export default function EventDetailScreen() {
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     margin: 14,
     padding: 14,
     borderRadius: radius.card,
-    ...shadow.card,
+    ...elevation.card,
   },
   title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
   subtitle: { ...typography.secondary, marginTop: 4 },

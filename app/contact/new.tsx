@@ -17,7 +17,8 @@ import { InterestPicker } from '../../src/components/InterestPicker';
 import { useActiveEvent } from '../../src/hooks/useActiveEvent';
 import { createContact } from '../../src/db/contacts';
 import { addPhoto } from '../../src/db/photos';
-import { colors, radius, shadow, typography, type InterestLevel } from '../../src/theme';
+import { colors, radius, elevation, typography, type InterestLevel } from '../../src/theme';
+import { success, warning } from '../../src/utils/haptics';
 
 export default function NewContactScreen() {
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function NewContactScreen() {
 
   async function onSave() {
     if (!companyName.trim()) {
+      warning();
       Alert.alert('Company name required', 'Add at least a company name to save.');
       return;
     }
@@ -69,6 +71,7 @@ export default function NewContactScreen() {
       if (pendingPhotoUri) {
         await addPhoto(id, 'business_card', pendingPhotoUri);
       }
+      success();
       router.back();
     } catch (e) {
       Alert.alert('Could not save', e instanceof Error ? e.message : String(e));
@@ -274,7 +277,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    ...shadow.card,
+    ...elevation.card,
   },
   saveLabel: { color: colors.surface, fontSize: 16, fontWeight: '700', letterSpacing: 1 },
 });
