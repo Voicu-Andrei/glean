@@ -43,12 +43,13 @@ export default function ContactsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search companies, names, notes..."
+          placeholder="Search…"
           placeholderTextColor={colors.textSecondary}
           style={styles.searchInput}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
+          clearButtonMode="while-editing"
         />
       </View>
       <FilterBar state={filters} onChange={setFilters} />
@@ -84,12 +85,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 10,
     marginHorizontal: 14,
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 2,
     gap: 6,
   },
-  searchIcon: { fontSize: 14 },
+  searchIcon: { fontSize: 13 },
   searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: 6 },
   listContent: { padding: 14, paddingTop: 4, paddingBottom: 100 },
   empty: { alignItems: 'center', paddingTop: 80 },

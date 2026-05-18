@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text } from 'react-native';
 import { colors, shadow } from '../theme';
 
 type Props = {
@@ -7,25 +8,46 @@ type Props = {
 };
 
 export function FAB({ onPress, label = '+' }: Props) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animateTo = (value: number) =>
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 100,
+    }).start();
+
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}>
-      <Text style={styles.label}>{label}</Text>
-    </Pressable>
+    <Animated.View style={[styles.fabWrap, { transform: [{ scale }] }]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => animateTo(0.92)}
+        onPressOut={() => animateTo(1)}
+        style={styles.fab}
+        accessibilityRole="button"
+        accessibilityLabel="Add contact"
+      >
+        <Text style={styles.label}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: {
+  fabWrap: {
     position: 'absolute',
     right: 20,
     bottom: 24,
+    ...shadow.fab,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.fab,
   },
   label: {
     color: colors.surface,
