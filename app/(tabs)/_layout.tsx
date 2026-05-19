@@ -30,7 +30,7 @@ function CenterTabButton({ onPress, accessibilityState }: {
         <Icon
           name="grid"
           size={24}
-          color={selected ? colors.surface : colors.primary}
+          color={selected ? colors.surface : colors.textTertiary}
         />
       </Pressable>
     </View>
@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
     borderColor: colors.surface,
   },
   centerBtnIdle: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.surface,
+    borderColor: colors.borderSoft,
   },
   centerBtnSelected: {
     backgroundColor: colors.primary,

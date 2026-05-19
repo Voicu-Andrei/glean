@@ -22,7 +22,7 @@ import {
   type TagWithCount,
 } from '../../src/db/tags';
 import { getMyCard, isMyCardFilled, type MyCard } from '../../src/db/myCard';
-import { getAccount, isAccountComplete, type Account } from '../../src/db/account';
+import { getAccount, isAccountComplete, saveAccount, type Account } from '../../src/db/account';
 import { exportContactsCsv } from '../../src/utils/export';
 import { colors, radius, elevation, typography } from '../../src/theme';
 
@@ -141,26 +141,11 @@ export default function AccountScreen() {
           <Icon name="chevron-forward" size={18} color={colors.textTertiary} />
         </Pressable>
 
-        {/* Feed teaser */}
-        {registered && (
-          <View style={styles.teaserCard}>
-            <View style={styles.teaserIcon}>
-              <Icon name="sparkles" size={18} color={colors.accent} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.teaserTitle}>Coming soon: the Feed</Text>
-              <Text style={styles.teaserBody}>
-                {account.type === 'business'
-                  ? 'Get discovered by attendees searching your industry.'
-                  : 'Discover fairs near you and follow businesses you care about.'}
-              </Text>
-            </View>
-          </View>
-        )}
       </ScrollView>
 
       <SettingsSheet
         visible={menuOpen}
+        registered={registered}
         onClose={() => setMenuOpen(false)}
         onTags={() => { setMenuOpen(false); router.push('/account/tags'); }}
         onExport={async () => {
@@ -172,24 +157,56 @@ export default function AccountScreen() {
           }
         }}
         onAbout={() => { setMenuOpen(false); router.push('/account/about'); }}
+        onResetProfile={() => {
+          Alert.alert(
+            'Reset profile?',
+            'This clears your registered profile (role, name, email, etc). My Card and contacts are untouched.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Reset',
+                style: 'destructive',
+                onPress: async () => {
+                  await saveAccount({
+                    type: null, name: '', email: '',
+                    interests: [], location: '',
+                    company: '', industry: '', website: '', description: '',
+                    created_at: null,
+                  });
+                  setMenuOpen(false);
+                  await reload();
+                },
+              },
+            ],
+          );
+        }}
       />
     </Screen>
   );
 }
 
 function SettingsSheet({
-  visible, onClose, onTags, onExport, onAbout,
+  visible, registered, onClose, onTags, onExport, onAbout, onResetProfile,
 }: {
   visible: boolean;
+  registered: boolean;
   onClose: () => void;
   onTags: () => void;
   onExport: () => void;
   onAbout: () => void;
+  onResetProfile: () => void;
 }) {
-  const items: Array<{ icon: React.ComponentProps<typeof Icon>['name']; label: string; sub: string; onPress: () => void; tint?: string }> = [
+  const items: Array<{ icon: React.ComponentProps<typeof Icon>['name']; label: string; sub: string; onPress: () => void; destructive?: boolean }> = [
     { icon: 'pricetags-outline', label: 'Manage tags', sub: 'Create, rename, recolor', onPress: onTags },
     { icon: 'share-outline', label: 'Export all contacts', sub: 'CSV via share sheet', onPress: onExport },
     { icon: 'information-circle-outline', label: 'About Glean', sub: 'Version & info', onPress: onAbout },
+    ...(registered ? [{
+      icon: 'refresh-outline' as const,
+      label: 'Reset profile',
+      sub: 'Clear role & registration data',
+      onPress: onResetProfile,
+      destructive: true,
+    }] : []),
   ];
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -199,11 +216,11 @@ function SettingsSheet({
           <Text style={styles.sheetTitle}>Settings</Text>
           {items.map((it) => (
             <Pressable key={it.label} onPress={it.onPress} style={styles.sheetRow}>
-              <View style={styles.sheetIcon}>
-                <Icon name={it.icon} size={20} color={colors.primary} />
+              <View style={[styles.sheetIcon, it.destructive && { backgroundColor: '#FCEAEA' }]}>
+                <Icon name={it.icon} size={20} color={it.destructive ? colors.danger : colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.sheetRowLabel}>{it.label}</Text>
+                <Text style={[styles.sheetRowLabel, it.destructive && { color: colors.danger }]}>{it.label}</Text>
                 <Text style={styles.sheetRowSub}>{it.sub}</Text>
               </View>
               <Icon name="chevron-forward" size={16} color={colors.textTertiary} />

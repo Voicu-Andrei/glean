@@ -15,11 +15,13 @@ import { Screen } from '../../src/components/Screen';
 import { Icon } from '../../src/components/Icon';
 import {
   getAccount,
+  isAccountComplete,
   saveAccount,
   SUGGESTED_INDUSTRIES,
   type Account,
   type AccountType,
 } from '../../src/db/account';
+import { getMyCard, saveMyCard } from '../../src/db/myCard';
 import { colors, elevation, radius, typography } from '../../src/theme';
 import { success, warning } from '../../src/utils/haptics';
 
@@ -33,7 +35,9 @@ export default function RegisterScreen() {
   useEffect(() => {
     void getAccount().then((a) => {
       setAccount(a);
-      if (a.type) setStep('details');
+      // Only auto-advance if the user has actually completed registration before.
+      // A partially-filled or abandoned previous attempt still starts on the type picker.
+      if (isAccountComplete(a)) setStep('details');
     });
   }, []);
 
@@ -42,7 +46,14 @@ export default function RegisterScreen() {
   }
 
   function chooseType(t: AccountType) {
-    setAccount((a) => (a ? { ...a, type: t } : a));
+    setAccount((a) => {
+      if (!a) return a;
+      // Clear role-specific fields when switching so the wrong-mode draft can't leak in.
+      if (t === 'customer') {
+        return { ...a, type: t, company: '', industry: '', website: '', description: '' };
+      }
+      return { ...a, type: t, interests: [] };
+    });
     setStep('details');
   }
 
@@ -59,14 +70,21 @@ export default function RegisterScreen() {
 
   async function onSave() {
     if (!account || !account.type) return;
-    if (!account.name.trim()) {
+    const name = account.name.trim();
+    const email = account.email.trim();
+    if (!name) {
       warning();
       Alert.alert('Name required');
       return;
     }
-    if (!account.email.trim()) {
+    if (!email) {
       warning();
       Alert.alert('Email required');
+      return;
+    }
+    if (!/.+@.+\..+/.test(email)) {
+      warning();
+      Alert.alert('Check the email', `"${email}" doesn't look like a valid email address.`);
       return;
     }
     if (account.type === 'business' && !account.company.trim()) {
@@ -74,7 +92,26 @@ export default function RegisterScreen() {
       Alert.alert('Company required for business accounts');
       return;
     }
-    await saveAccount(account);
+    const next: Account = { ...account, name, email };
+    await saveAccount(next);
+
+    // Bridge: prefill My Card from the profile if it's empty, so users don't
+    // re-enter their name+email twice. Existing My Card data is left intact.
+    try {
+      const card = await getMyCard();
+      const patched = {
+        ...card,
+        name: card.name || name,
+        email: card.email || email,
+        company: card.company || (next.type === 'business' ? next.company : ''),
+        role: card.role,
+        website: card.website || next.website,
+      };
+      await saveMyCard(patched);
+    } catch {
+      // non-fatal — My Card prefill is a convenience
+    }
+
     success();
     router.back();
   }
