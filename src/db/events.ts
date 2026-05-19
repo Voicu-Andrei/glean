@@ -96,3 +96,42 @@ export async function deleteEvent(id: number): Promise<void> {
   const db = await getDb();
   await db.runAsync('DELETE FROM events WHERE id = ?;', id);
 }
+
+/**
+ * Auto-balance the active-event flag based on the wall clock:
+ *  - if the currently active event's end_date has passed, deactivate it
+ *  - if no event is active and an event is currently in progress (start <= now <= end),
+ *    activate it (most recently started one wins on overlap)
+ * Returns whether anything changed.
+ */
+export async function autoBalanceActiveEvent(): Promise<boolean> {
+  const db = await getDb();
+  let changed = false;
+
+  const result = await db.runAsync(
+    `UPDATE events
+       SET is_active = 0, updated_at = datetime('now')
+       WHERE is_active = 1
+         AND end_date IS NOT NULL
+         AND datetime(end_date) < datetime('now');`,
+  );
+  if ((result.changes ?? 0) > 0) changed = true;
+
+  const hasActive = await db.getFirstAsync<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM events WHERE is_active = 1;',
+  );
+  if (hasActive && hasActive.n === 0) {
+    const candidate = await db.getFirstAsync<{ id: number }>(
+      `SELECT id FROM events
+         WHERE datetime(start_date) <= datetime('now')
+           AND (end_date IS NULL OR datetime(end_date) >= datetime('now'))
+         ORDER BY start_date DESC
+         LIMIT 1;`,
+    );
+    if (candidate) {
+      await db.runAsync('UPDATE events SET is_active = 1, updated_at = datetime(\'now\') WHERE id = ?;', candidate.id);
+      changed = true;
+    }
+  }
+  return changed;
+}

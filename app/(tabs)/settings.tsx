@@ -8,7 +8,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
+import { Icon } from '../../src/components/Icon';
 import {
   createTag,
   deleteTag,
@@ -16,22 +18,28 @@ import {
   renameTag,
   type TagWithCount,
 } from '../../src/db/tags';
+import { getMyCard, isMyCardFilled, type MyCard } from '../../src/db/myCard';
 import { exportContactsCsv } from '../../src/utils/export';
 import { colors, radius, elevation, typography } from '../../src/theme';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [tags, setTags] = useState<TagWithCount[]>([]);
   const [newTag, setNewTag] = useState('');
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  const [myCard, setMyCard] = useState<MyCard | null>(null);
 
   const reload = useCallback(async () => {
     setTags(await listTagsWithCount());
+    setMyCard(await getMyCard());
   }, []);
 
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useFocusEffect(useCallback(() => { void reload(); }, [reload]));
 
   async function onCreate() {
     const name = newTag.trim();
@@ -92,12 +100,47 @@ export default function SettingsScreen() {
     }
   }
 
+  const myCardFilled = myCard ? isMyCardFilled(myCard) : false;
+
   return (
     <Screen style={styles.flex}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.screenTitle}>Settings</Text>
 
-        <Text style={[typography.sectionLabel, { marginTop: 16 }]}>Tags</Text>
+        <Text style={[typography.sectionLabel, { marginTop: 16 }]}>You</Text>
+        <Pressable
+          onPress={() => router.push('/settings/my-card')}
+          style={[styles.card, styles.linkRow]}
+        >
+          <View style={styles.iconCircle}>
+            <Icon name="person-circle-outline" size={22} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.linkLabel}>My Card</Text>
+            <Text style={styles.linkHint}>
+              {myCardFilled
+                ? `${myCard?.name || 'Card set'} — tap to view QR or edit`
+                : 'Add your details to share via QR'}
+            </Text>
+          </View>
+          <Icon name="chevron-forward" size={18} color={colors.textTertiary} />
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push('/scan')}
+          style={[styles.card, styles.linkRow]}
+        >
+          <View style={styles.iconCircle}>
+            <Icon name="qr-code-outline" size={22} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.linkLabel}>Scan a QR card</Text>
+            <Text style={styles.linkHint}>Import someone else's details instantly</Text>
+          </View>
+          <Icon name="chevron-forward" size={18} color={colors.textTertiary} />
+        </Pressable>
+
+        <Text style={[typography.sectionLabel, { marginTop: 24 }]}>Tags</Text>
         <View style={styles.card}>
           <View style={styles.addRow}>
             <TextInput
@@ -213,4 +256,17 @@ const styles = StyleSheet.create({
   actionHint: { ...typography.secondary, marginTop: 4 },
   empty: { textAlign: 'center', paddingVertical: 12, color: colors.textSecondary },
   bodyText: { fontSize: 14, color: colors.textPrimary },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+  },
+  iconCircle: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  linkLabel: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  linkHint: { ...typography.tertiary, marginTop: 2 },
 });

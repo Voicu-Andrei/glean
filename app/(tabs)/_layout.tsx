@@ -37,6 +37,7 @@ export default function TabsLayout() {
   const { count } = useIncompleteCount();
   return (
     <Tabs
+      initialRouteName="dashboard"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textTertiary,
