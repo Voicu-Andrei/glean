@@ -75,7 +75,7 @@ export default function EventDetailScreen() {
     <Screen style={styles.flex}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text style={styles.back}>‹ Back</Text>
+          <Icon name="chevron-back" size={26} color={colors.primary} />
         </Pressable>
         <Pressable onPress={() => void onExport()} hitSlop={10}>
           <Text style={styles.export}>Share</Text>

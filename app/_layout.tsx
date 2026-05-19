@@ -9,7 +9,7 @@ import { colors } from '../src/theme';
 
 enableScreens(false);
 
-const MIN_SPLASH_MS = 1700;
+const MIN_SPLASH_MS = 1100;
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);

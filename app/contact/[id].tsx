@@ -11,19 +11,20 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { Icon, type IconName } from '../../src/components/Icon';
-import { InterestBadge } from '../../src/components/InterestBadge';
+import { InterestPicker } from '../../src/components/InterestPicker';
 import { PhotoStrip } from '../../src/components/PhotoStrip';
 import { TagChip } from '../../src/components/TagChip';
 import {
-  cycleInterest,
   deleteContact,
   getContact,
+  updateContact,
   type ContactRow,
 } from '../../src/db/contacts';
+import type { InterestLevel } from '../../src/theme';
 import { getEvent, type EventRow } from '../../src/db/events';
 import { listPhotos, type PhotoRow } from '../../src/db/photos';
 import { tagsForContact, type TagRow } from '../../src/db/tags';
-import { colors, interestMeta, radius, elevation, typography } from '../../src/theme';
+import { colors, radius, elevation, typography } from '../../src/theme';
 import { formatDate } from '../../src/utils/format';
 import { select } from '../../src/utils/haptics';
 
@@ -66,9 +67,9 @@ export default function ContactDetailScreen() {
     );
   }
 
-  async function onInterest() {
+  async function onInterestChange(level: InterestLevel) {
     select();
-    await cycleInterest(id);
+    await updateContact(id, { interest_level: level });
     await reload();
   }
 
@@ -86,7 +87,6 @@ export default function ContactDetailScreen() {
     ]);
   }
 
-  const interestLabel = contact.interest_level ? interestMeta[contact.interest_level].label.toUpperCase() : 'NO INTEREST';
   const subtitleParts = [event?.name, contact.date_met ? formatDate(contact.date_met) : null].filter(Boolean);
 
   const websiteUrl = contact.website
@@ -114,15 +114,17 @@ export default function ContactDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Pressable onPress={() => void onInterest()} style={styles.interestHeader}>
-          <InterestBadge level={contact.interest_level} size="md" />
-          <Text style={styles.interestLabel}>{interestLabel}</Text>
-          <Text style={styles.interestHint}>Tap to change</Text>
-        </Pressable>
         <Text style={styles.company}>{contact.company_name}</Text>
         {subtitleParts.length > 0 && (
           <Text style={styles.subtitle}>{subtitleParts.join(' · ')}</Text>
         )}
+
+        <View style={styles.interestPickerWrap}>
+          <InterestPicker
+            value={contact.interest_level}
+            onChange={(v) => void onInterestChange(v)}
+          />
+        </View>
 
         {actions.length > 0 && (
           <View style={styles.actionRow}>
@@ -234,10 +236,8 @@ const styles = StyleSheet.create({
   backRow: { flexDirection: 'row', alignItems: 'center' },
   edit: { fontSize: 16, color: colors.primary, fontWeight: '600', paddingHorizontal: 6 },
   scroll: { padding: 16, paddingBottom: 80 },
-  interestHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  interestLabel: { fontSize: 12, fontWeight: '700', color: colors.textPrimary, letterSpacing: 0.8 },
-  interestHint: { fontSize: 11, color: colors.textTertiary, marginLeft: 2 },
-  company: { ...typography.largeTitle, color: colors.textPrimary, marginTop: 6 },
+  interestPickerWrap: { marginTop: 14 },
+  company: { ...typography.largeTitle, color: colors.textPrimary },
   subtitle: { ...typography.secondary, marginTop: 4 },
   actionRow: {
     flexDirection: 'row',

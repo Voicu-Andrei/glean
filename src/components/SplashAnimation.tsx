@@ -41,11 +41,11 @@ export function SplashAnimation({ brand = true }: Props) {
     // Splatter
     const splatAnims = splatScales.map((v, i) =>
       Animated.sequence([
-        Animated.delay(500 + SPLATS[i].delay),
+        Animated.delay(300 + SPLATS[i].delay),
         Animated.timing(v, {
           toValue: 1,
-          duration: 320,
-          easing: Easing.out(Easing.back(2)),
+          duration: 260,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
@@ -54,11 +54,11 @@ export function SplashAnimation({ brand = true }: Props) {
 
     // Crossfade + bg morph
     Animated.sequence([
-      Animated.delay(900),
+      Animated.delay(600),
       Animated.parallel([
-        Animated.timing(bgTeal, { toValue: 1, duration: 500, useNativeDriver: false, easing: Easing.inOut(Easing.quad) }),
-        Animated.timing(v1Opacity, { toValue: 0, duration: 400, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
-        Animated.timing(v2Opacity, { toValue: 1, duration: 500, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
+        Animated.timing(bgTeal, { toValue: 1, duration: 380, useNativeDriver: false, easing: Easing.inOut(Easing.quad) }),
+        Animated.timing(v1Opacity, { toValue: 0, duration: 320, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
+        Animated.timing(v2Opacity, { toValue: 1, duration: 380, useNativeDriver: true, easing: Easing.inOut(Easing.quad) }),
       ]),
     ]).start();
   }, [bgTeal, logoBreath, splatScales, v1Opacity, v2Opacity]);
@@ -117,9 +117,6 @@ export function SplashAnimation({ brand = true }: Props) {
       {brand && (
         <View style={styles.brandWrap}>
           <Animated.Text style={[styles.brand, { color: brandColor }]}>Glean</Animated.Text>
-          <Animated.Text style={[styles.tagline, { color: brandColor, opacity: 0.7 }]}>
-            Capture every connection
-          </Animated.Text>
         </View>
       )}
     </Animated.View>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, elevation, typography, interestMeta } from '../theme';
 import type { ContactListItem } from '../db/contacts';
@@ -29,16 +29,7 @@ export function ContactCard({ contact, onPress, subtitleOverride }: Props) {
   const isIncomplete = contact.is_complete === 0;
   const meta = contact.interest_level ? interestMeta[contact.interest_level] : null;
 
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(10)).current;
   const scale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 240, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 240, useNativeDriver: true }),
-    ]).start();
-  }, [opacity, translateY]);
 
   const onIn = () =>
     Animated.spring(scale, { toValue: 0.98, useNativeDriver: true, friction: 8, tension: 120 }).start();
@@ -46,7 +37,7 @@ export function ContactCard({ contact, onPress, subtitleOverride }: Props) {
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 8, tension: 120 }).start();
 
   return (
-    <Animated.View style={{ opacity, transform: [{ translateY }, { scale }] }}>
+    <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable onPress={onPress} onPressIn={onIn} onPressOut={onOut} style={styles.cardOuter}>
         {meta && <View style={[styles.stripe, { backgroundColor: meta.edge }]} />}
         <View style={styles.body}>
@@ -113,10 +104,10 @@ const styles = StyleSheet.create({
   incompletePill: {
     paddingHorizontal: 7,
     paddingVertical: 3,
-    backgroundColor: colors.warmTint,
+    backgroundColor: colors.accent,
     borderRadius: radius.xs,
   },
-  incompleteText: { fontSize: 10, fontWeight: '700', color: colors.accent, letterSpacing: 0.5 },
+  incompleteText: { fontSize: 10, fontWeight: '700', color: colors.surface, letterSpacing: 0.5 },
   contactLine: { ...typography.body, color: colors.textSecondary, marginTop: 3 },
   metaRow: {
     flexDirection: 'row',

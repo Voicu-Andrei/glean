@@ -40,19 +40,30 @@ export default function ContactsScreen() {
   return (
     <Screen style={styles.flex}>
       <ActiveEventBanner event={activeEvent} />
-      <View style={styles.searchWrap}>
-        <Icon name="search" size={16} color={colors.textSecondary} />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search"
-          placeholderTextColor={colors.textSecondary}
-          style={styles.searchInput}
-          autoCorrect={false}
-          autoCapitalize="none"
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-        />
+      <View style={styles.toolbar}>
+        <View style={styles.searchWrap}>
+          <Icon name="search" size={16} color={colors.textSecondary} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search"
+            placeholderTextColor={colors.textSecondary}
+            style={styles.searchInput}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+        </View>
+        <Pressable
+          onPress={() => router.push('/scan')}
+          style={styles.scanBtn}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Scan QR card"
+        >
+          <Icon name="qr-code-outline" size={18} color={colors.primary} />
+        </Pressable>
       </View>
       <FilterBar state={filters} onChange={setFilters} />
       <FlatList
@@ -78,50 +89,38 @@ export default function ContactsScreen() {
         }
       />
       <FAB onPress={() => router.push('/contact/new')} />
-      <Pressable
-        onPress={() => router.push('/scan')}
-        style={styles.scanFab}
-        accessibilityRole="button"
-        accessibilityLabel="Scan QR card"
-        hitSlop={6}
-      >
-        <Icon name="qr-code" size={18} color={colors.primary} />
-      </Pressable>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 14,
+    marginTop: 10,
+  },
   searchWrap: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 12,
-    marginHorizontal: 14,
-    marginTop: 10,
     paddingHorizontal: 12,
     paddingVertical: 6,
     gap: 8,
     borderWidth: 1,
     borderColor: colors.borderSoft,
   },
-  searchIcon: { fontSize: 14, color: colors.textSecondary },
   searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: 6 },
-  listContent: { padding: 14, paddingTop: 4, paddingBottom: 100 },
-  scanFab: {
-    position: 'absolute',
-    right: 28,
-    bottom: 92,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+  scanBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
   },
+  listContent: { padding: 14, paddingTop: 4, paddingBottom: 100 },
   empty: { alignItems: 'center', paddingTop: 90, paddingHorizontal: 32 },
   emptyIconWrap: {
     width: 72, height: 72, borderRadius: 36,

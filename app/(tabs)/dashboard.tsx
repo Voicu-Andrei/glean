@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
+import { FAB } from '../../src/components/FAB';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { ContactCard } from '../../src/components/ContactCard';
 import { useDashboard } from '../../src/hooks/useDashboard';
@@ -59,6 +60,7 @@ export default function DashboardScreen() {
             tint={interestMeta.hot.tint}
             value={stats.hotCount}
             label="Hot leads"
+            onPress={() => router.push('/(tabs)')}
           />
           <StatTile
             icon="time-outline"
@@ -66,6 +68,7 @@ export default function DashboardScreen() {
             tint={colors.primarySoft}
             value={stats.thisWeek}
             label="This week"
+            onPress={() => router.push('/(tabs)')}
           />
           <StatTile
             icon="create-outline"
@@ -135,6 +138,7 @@ export default function DashboardScreen() {
           </View>
         )}
       </ScrollView>
+      <FAB onPress={() => router.push('/contact/new')} />
     </Screen>
   );
 }

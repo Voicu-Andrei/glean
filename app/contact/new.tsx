@@ -68,7 +68,7 @@ export default function NewContactScreen() {
         what_they_sell: whatTheySell.trim() || null,
         notes: note.trim() || null,
         interest_level: interest,
-        date_met: activeEvent?.start_date,
+        // date_met defaults to today via SQL — let it
       });
       if (pendingPhotoUri) {
         await addPhoto(id, 'business_card', pendingPhotoUri);
@@ -89,11 +89,13 @@ export default function NewContactScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={10} style={{ width: 30 }}>
+          <Pressable onPress={() => router.back()} hitSlop={10} style={{ width: 56 }}>
             <Icon name="close" size={26} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>New Contact</Text>
-          <View style={{ width: 30 }} />
+          <Pressable onPress={() => void onSave()} disabled={saving} hitSlop={10} style={{ width: 56, alignItems: 'flex-end' }}>
+            <Text style={[styles.headerSave, saving && { opacity: 0.5 }]}>Save</Text>
+          </Pressable>
         </View>
         <ActiveEventBanner event={activeEvent} />
 
@@ -147,6 +149,28 @@ export default function NewContactScreen() {
             </Text>
           </Pressable>
 
+          <Field label="Phone">
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+1 555 123 4567"
+              placeholderTextColor={colors.textSecondary}
+              style={styles.input}
+              keyboardType="phone-pad"
+            />
+          </Field>
+          <Field label="Email">
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="john@acme.com"
+              placeholderTextColor={colors.textSecondary}
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </Field>
+
           <Field label="Quick Note">
             <TextInput
               value={note}
@@ -167,27 +191,6 @@ export default function NewContactScreen() {
 
           {expanded && (
             <>
-              <Field label="Phone">
-                <TextInput
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="+1 555 123 4567"
-                  placeholderTextColor={colors.textSecondary}
-                  style={styles.input}
-                  keyboardType="phone-pad"
-                />
-              </Field>
-              <Field label="Email">
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="john@acme.com"
-                  placeholderTextColor={colors.textSecondary}
-                  style={styles.input}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </Field>
               <Field label="Website">
                 <TextInput
                   value={website}
@@ -246,6 +249,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  headerSave: { fontSize: 16, fontWeight: '700', color: colors.primary },
   scroll: { padding: 16, paddingTop: 14, paddingBottom: 60 },
   input: {
     backgroundColor: colors.surface,
