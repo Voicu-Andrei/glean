@@ -57,13 +57,13 @@ export default function EventsScreen() {
       </View>
 
       {totalCount > 0 && (
-        <>
+        <View style={styles.toolbar}>
           <View style={styles.searchWrap}>
-            <Icon name="search" size={16} color={colors.textSecondary} />
+            <Icon name="search" size={14} color={colors.textSecondary} />
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search by name or location"
+              placeholder="Search"
               placeholderTextColor={colors.textSecondary}
               style={styles.searchInput}
               autoCorrect={false}
@@ -71,7 +71,6 @@ export default function EventsScreen() {
               clearButtonMode="while-editing"
             />
           </View>
-
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -90,7 +89,7 @@ export default function EventsScreen() {
               </Pressable>
             ))}
           </ScrollView>
-        </>
+        </View>
       )}
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -163,23 +162,31 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 2,
+  },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    marginHorizontal: 14,
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 8,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    gap: 6,
     borderWidth: 1,
     borderColor: colors.borderSoft,
+    flex: 1,
+    minWidth: 80,
   },
-  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: 6 },
-  chipRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
+  searchInput: { flex: 1, fontSize: 13, color: colors.textPrimary, paddingVertical: 5 },
+  chipRow: { flexDirection: 'row', gap: 4 },
   chip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.pill,
     borderWidth: 1,
@@ -187,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   chipActive: { backgroundColor: colors.primarySoft, borderColor: colors.primary },
-  chipLabel: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
+  chipLabel: { fontSize: 11, fontWeight: '600', color: colors.textSecondary },
   chipLabelActive: { color: colors.primary },
   scroll: { padding: 14, paddingBottom: 40 },
   card: {

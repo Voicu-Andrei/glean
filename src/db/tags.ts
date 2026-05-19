@@ -2,6 +2,19 @@ import { getDb } from './index';
 
 export const MAX_TAGS_PER_CONTACT = 10;
 
+export const TAG_COLORS = [
+  '#1A6B6B', // teal (primary)
+  '#5B7FA6', // slate-blue
+  '#2E7D32', // green
+  '#D4820A', // amber
+  '#C73E1D', // red
+  '#6A1B9A', // purple
+  '#E91E63', // pink
+  '#0277BD', // blue
+  '#6B7280', // gray
+  '#1C1C1E', // near-black
+] as const;
+
 export type TagRow = {
   id: number;
   name: string;
@@ -39,6 +52,11 @@ export async function createTag(name: string, color = '#6B7280'): Promise<number
 export async function renameTag(id: number, name: string): Promise<void> {
   const db = await getDb();
   await db.runAsync('UPDATE tags SET name = ? WHERE id = ?;', name.trim(), id);
+}
+
+export async function setTagColor(id: number, color: string): Promise<void> {
+  const db = await getDb();
+  await db.runAsync('UPDATE tags SET color = ? WHERE id = ?;', color, id);
 }
 
 export async function deleteTag(id: number): Promise<void> {

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { enableScreens } from 'react-native-screens';
 import { getDb } from '../src/db';
-import { colors, typography } from '../src/theme';
+import { SplashAnimation } from '../src/components/SplashAnimation';
+import { colors } from '../src/theme';
 
 enableScreens(false);
 
-const MIN_SPLASH_MS = 900;
+const MIN_SPLASH_MS = 1700;
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -40,8 +41,6 @@ export default function RootLayout() {
   if (error) {
     return (
       <View style={styles.splash}>
-        <Image source={require('../assets/icon.png')} style={styles.splashLogo} />
-        <Text style={styles.brand}>Glean</Text>
         <Text style={styles.errTitle}>Could not open database</Text>
         <Text style={styles.errMsg}>{error}</Text>
       </View>
@@ -49,16 +48,7 @@ export default function RootLayout() {
   }
 
   if (!ready) {
-    return (
-      <View style={styles.splash}>
-        <Image source={require('../assets/icon.png')} style={styles.splashLogo} />
-        <Text style={styles.brand}>Glean</Text>
-        <Text style={styles.tagline}>Capture every connection</Text>
-        <View style={{ marginTop: 24 }}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      </View>
-    );
+    return <SplashAnimation />;
   }
 
   return (
@@ -85,22 +75,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.background,
     paddingHorizontal: 32,
-  },
-  splashLogo: {
-    width: 88,
-    height: 88,
-    borderRadius: 22,
-    marginBottom: 18,
-  },
-  brand: {
-    ...typography.largeTitle,
-    color: colors.primary,
-    letterSpacing: 0.5,
-  },
-  tagline: {
-    ...typography.callout,
-    color: colors.textSecondary,
-    marginTop: 6,
   },
   errTitle: { fontSize: 16, fontWeight: '700', color: colors.danger, marginTop: 18, marginBottom: 6 },
   errMsg: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },

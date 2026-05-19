@@ -16,6 +16,8 @@ import {
   deleteTag,
   listTagsWithCount,
   renameTag,
+  setTagColor,
+  TAG_COLORS,
   type TagWithCount,
 } from '../../src/db/tags';
 import { getMyCard, isMyCardFilled, type MyCard } from '../../src/db/myCard';
@@ -26,6 +28,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const [tags, setTags] = useState<TagWithCount[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [newTagColor, setNewTagColor] = useState<string>(TAG_COLORS[0]);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [myCard, setMyCard] = useState<MyCard | null>(null);
@@ -45,8 +48,9 @@ export default function SettingsScreen() {
     const name = newTag.trim();
     if (name.length === 0) return;
     try {
-      await createTag(name);
+      await createTag(name, newTagColor);
       setNewTag('');
+      setNewTagColor(TAG_COLORS[0]);
       await reload();
     } catch {
       Alert.alert('Could not create tag', 'A tag with that name already exists.');
@@ -157,6 +161,21 @@ export default function SettingsScreen() {
               <Text style={styles.addBtnLabel}>Add</Text>
             </Pressable>
           </View>
+          <View style={styles.swatchRow}>
+            {TAG_COLORS.map((c) => (
+              <Pressable
+                key={c}
+                onPress={() => setNewTagColor(c)}
+                style={[
+                  styles.swatch,
+                  { backgroundColor: c },
+                  newTagColor === c && styles.swatchSelected,
+                ]}
+                hitSlop={4}
+                accessibilityLabel={`Color ${c}`}
+              />
+            ))}
+          </View>
           {tags.length === 0 && <Text style={styles.empty}>No tags yet.</Text>}
           {tags.map((t) => (
             <View key={t.id} style={styles.tagRow}>
@@ -180,7 +199,18 @@ export default function SettingsScreen() {
                   }}
                   style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
                 >
-                  <View style={[styles.tagDot, { backgroundColor: t.color }]} />
+                  <Pressable
+                    onPress={async (e) => {
+                      e.stopPropagation();
+                      const idx = TAG_COLORS.indexOf(t.color as (typeof TAG_COLORS)[number]);
+                      const next = TAG_COLORS[(idx + 1 + TAG_COLORS.length) % TAG_COLORS.length];
+                      await setTagColor(t.id, next);
+                      await reload();
+                    }}
+                    hitSlop={8}
+                  >
+                    <View style={[styles.tagDot, { backgroundColor: t.color }]} />
+                  </Pressable>
                   <Text style={styles.tagLabel}>{t.name}</Text>
                   <Text style={styles.tagCount}>· {t.contact_count}</Text>
                 </Pressable>
@@ -221,7 +251,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
     ...elevation.card,
   },
-  addRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  addRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
+  swatchRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  swatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  swatchSelected: {
+    borderColor: colors.textPrimary,
+  },
   addInput: {
     flex: 1,
     borderWidth: 1,
