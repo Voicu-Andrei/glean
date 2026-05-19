@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { Icon } from '../../src/components/Icon';
 import {
@@ -21,299 +22,338 @@ import {
   type TagWithCount,
 } from '../../src/db/tags';
 import { getMyCard, isMyCardFilled, type MyCard } from '../../src/db/myCard';
+import { getAccount, isAccountComplete, type Account } from '../../src/db/account';
 import { exportContactsCsv } from '../../src/utils/export';
 import { colors, radius, elevation, typography } from '../../src/theme';
 
-export default function SettingsScreen() {
+export default function AccountScreen() {
   const router = useRouter();
-  const [tags, setTags] = useState<TagWithCount[]>([]);
-  const [newTag, setNewTag] = useState('');
-  const [newTagColor, setNewTagColor] = useState<string>(TAG_COLORS[0]);
-  const [renamingId, setRenamingId] = useState<number | null>(null);
-  const [renameDraft, setRenameDraft] = useState('');
+  const [account, setAccount] = useState<Account | null>(null);
   const [myCard, setMyCard] = useState<MyCard | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const reload = useCallback(async () => {
-    setTags(await listTagsWithCount());
+    setAccount(await getAccount());
     setMyCard(await getMyCard());
   }, []);
 
   useEffect(() => {
     void reload();
   }, [reload]);
-
   useFocusEffect(useCallback(() => { void reload(); }, [reload]));
 
-  async function onCreate() {
-    const name = newTag.trim();
-    if (name.length === 0) return;
-    try {
-      await createTag(name, newTagColor);
-      setNewTag('');
-      setNewTagColor(TAG_COLORS[0]);
-      await reload();
-    } catch {
-      Alert.alert('Could not create tag', 'A tag with that name already exists.');
-    }
-  }
+  if (!account) return <Screen style={styles.flex}><View /></Screen>;
 
-  async function onDelete(t: TagWithCount) {
-    Alert.alert(
-      `Delete "${t.name}"?`,
-      t.contact_count > 0
-        ? `This will remove the tag from ${t.contact_count} ${
-            t.contact_count === 1 ? 'contact' : 'contacts'
-          }.`
-        : 'This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteTag(t.id);
-            await reload();
-          },
-        },
-      ],
-    );
-  }
-
-  async function onRenameSave() {
-    if (renamingId == null) return;
-    const name = renameDraft.trim();
-    if (name.length === 0) {
-      setRenamingId(null);
-      return;
-    }
-    try {
-      await renameTag(renamingId, name);
-    } catch {
-      Alert.alert('Could not rename', 'Another tag already uses that name.');
-    }
-    setRenamingId(null);
-    setRenameDraft('');
-    await reload();
-  }
-
-  async function onExportAll() {
-    try {
-      await exportContactsCsv({ eventId: null });
-    } catch (e) {
-      Alert.alert('Export failed', e instanceof Error ? e.message : String(e));
-    }
-  }
-
+  const registered = isAccountComplete(account);
   const myCardFilled = myCard ? isMyCardFilled(myCard) : false;
 
   return (
     <Screen style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.screenTitle}>Settings</Text>
+      <View style={styles.header}>
+        <Text style={styles.screenTitle}>Account</Text>
+        <Pressable onPress={() => setMenuOpen(true)} hitSlop={10} style={styles.menuBtn}>
+          <Icon name="menu" size={22} color={colors.textPrimary} />
+        </Pressable>
+      </View>
 
-        <Text style={[typography.sectionLabel, { marginTop: 16 }]}>You</Text>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/* Profile hero */}
+        {registered ? (
+          <View style={styles.profileCard}>
+            <View style={styles.profileAvatar}>
+              <Text style={styles.profileInitials}>
+                {(account.name.trim().split(/\s+/).slice(0, 2).map(s => s[0]).join('') || '?').toUpperCase()}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.profileName}>{account.name}</Text>
+              {account.type === 'business' ? (
+                <Text style={styles.profileSub}>
+                  {[account.company, account.industry].filter(Boolean).join(' · ')}
+                </Text>
+              ) : (
+                <Text style={styles.profileSub}>
+                  {account.location || 'Customer'}
+                </Text>
+              )}
+              <View style={styles.roleRow}>
+                <View style={[styles.rolePill, account.type === 'business' ? styles.rolePillBiz : styles.rolePillCust]}>
+                  <Icon
+                    name={account.type === 'business' ? 'briefcase' : 'search'}
+                    size={11}
+                    color={account.type === 'business' ? colors.accent : colors.primary}
+                  />
+                  <Text style={[styles.rolePillText, { color: account.type === 'business' ? colors.accent : colors.primary }]}>
+                    {account.type === 'business' ? 'Business' : 'Customer'}
+                  </Text>
+                </View>
+                <Pressable onPress={() => router.push('/account/register')} hitSlop={6}>
+                  <Text style={styles.editLink}>Edit</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <Pressable onPress={() => router.push('/account/register')} style={styles.registerCard}>
+            <View style={styles.registerIconWrap}>
+              <Icon name="person-add" size={28} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.registerTitle}>Register your profile</Text>
+              <Text style={styles.registerBody}>
+                As a customer or a business — unlocks the upcoming feed of fairs and tracked businesses.
+              </Text>
+            </View>
+            <Icon name="chevron-forward" size={20} color={colors.textTertiary} />
+          </Pressable>
+        )}
+
+        {/* My Card */}
+        <Text style={[typography.sectionLabel, { marginTop: 22 }]}>My Card</Text>
         <Pressable
           onPress={() => router.push('/settings/my-card')}
-          style={[styles.card, styles.linkRow]}
+          style={[styles.linkCard]}
         >
-          <View style={styles.iconCircle}>
-            <Icon name="person-circle-outline" size={22} color={colors.primary} />
+          <View style={[styles.iconCircle, { backgroundColor: colors.primarySoft }]}>
+            <Icon name="qr-code" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.linkLabel}>My Card</Text>
+            <Text style={styles.linkLabel}>
+              {myCardFilled ? (myCard?.name || 'Your card') : 'Set up your card'}
+            </Text>
             <Text style={styles.linkHint}>
               {myCardFilled
-                ? `${myCard?.name || 'Card set'} — tap to view QR or edit`
-                : 'Add your details to share via QR'}
+                ? 'View QR · share at booths · edit'
+                : 'Share your details via QR with one tap'}
             </Text>
           </View>
           <Icon name="chevron-forward" size={18} color={colors.textTertiary} />
         </Pressable>
 
-        <Pressable
-          onPress={() => router.push('/scan')}
-          style={[styles.card, styles.linkRow]}
-        >
-          <View style={styles.iconCircle}>
-            <Icon name="qr-code-outline" size={22} color={colors.primary} />
+        <Pressable onPress={() => router.push('/scan')} style={[styles.linkCard]}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primarySoft }]}>
+            <Icon name="scan" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.linkLabel}>Scan a QR card</Text>
-            <Text style={styles.linkHint}>Import someone else's details instantly</Text>
+            <Text style={styles.linkHint}>Import someone's details instantly</Text>
           </View>
           <Icon name="chevron-forward" size={18} color={colors.textTertiary} />
         </Pressable>
 
-        <Text style={[typography.sectionLabel, { marginTop: 24 }]}>Tags</Text>
-        <View style={styles.card}>
-          <View style={styles.addRow}>
-            <TextInput
-              value={newTag}
-              onChangeText={setNewTag}
-              placeholder="New tag name"
-              placeholderTextColor={colors.textSecondary}
-              style={styles.addInput}
-              autoCapitalize="words"
-              returnKeyType="done"
-              onSubmitEditing={() => void onCreate()}
-            />
-            <Pressable onPress={() => void onCreate()} style={styles.addBtn}>
-              <Text style={styles.addBtnLabel}>Add</Text>
-            </Pressable>
-          </View>
-          <View style={styles.swatchRow}>
-            {TAG_COLORS.map((c) => (
-              <Pressable
-                key={c}
-                onPress={() => setNewTagColor(c)}
-                style={[
-                  styles.swatch,
-                  { backgroundColor: c },
-                  newTagColor === c && styles.swatchSelected,
-                ]}
-                hitSlop={4}
-                accessibilityLabel={`Color ${c}`}
-              />
-            ))}
-          </View>
-          {tags.length === 0 && <Text style={styles.empty}>No tags yet.</Text>}
-          {tags.map((t) => (
-            <View key={t.id} style={styles.tagRow}>
-              {renamingId === t.id ? (
-                <>
-                  <TextInput
-                    value={renameDraft}
-                    onChangeText={setRenameDraft}
-                    style={[styles.addInput, { flex: 1 }]}
-                    autoFocus
-                    returnKeyType="done"
-                    onSubmitEditing={() => void onRenameSave()}
-                    onBlur={() => void onRenameSave()}
-                  />
-                </>
-              ) : (
-                <Pressable
-                  onPress={() => {
-                    setRenamingId(t.id);
-                    setRenameDraft(t.name);
-                  }}
-                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
-                >
-                  <Pressable
-                    onPress={async (e) => {
-                      e.stopPropagation();
-                      const idx = TAG_COLORS.indexOf(t.color as (typeof TAG_COLORS)[number]);
-                      const next = TAG_COLORS[(idx + 1 + TAG_COLORS.length) % TAG_COLORS.length];
-                      await setTagColor(t.id, next);
-                      await reload();
-                    }}
-                    hitSlop={8}
-                  >
-                    <View style={[styles.tagDot, { backgroundColor: t.color }]} />
-                  </Pressable>
-                  <Text style={styles.tagLabel}>{t.name}</Text>
-                  <Text style={styles.tagCount}>· {t.contact_count}</Text>
-                </Pressable>
-              )}
-              <Pressable onPress={() => void onDelete(t)} hitSlop={8}>
-                <Text style={styles.deleteAction}>Delete</Text>
-              </Pressable>
+        {/* Feed teaser */}
+        {registered && (
+          <View style={styles.teaserCard}>
+            <View style={styles.teaserIcon}>
+              <Icon name="sparkles" size={18} color={colors.accent} />
             </View>
-          ))}
-        </View>
-
-        <Text style={[typography.sectionLabel, { marginTop: 24 }]}>Export</Text>
-        <Pressable onPress={() => void onExportAll()} style={[styles.card, styles.actionCard]}>
-          <Text style={styles.actionLabel}>Export All Contacts (CSV)</Text>
-          <Text style={styles.actionHint}>Opens the iOS share sheet — AirDrop, Mail, Files…</Text>
-        </Pressable>
-
-        <Text style={[typography.sectionLabel, { marginTop: 24 }]}>About</Text>
-        <View style={[styles.card, { paddingVertical: 16 }]}>
-          <Text style={styles.bodyText}>Glean v1.0 — local-first field CRM for trade fairs.</Text>
-          <Text style={[styles.bodyText, { color: colors.textSecondary, marginTop: 4 }]}>
-            All data lives on this device. No accounts. No internet required.
-          </Text>
-        </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.teaserTitle}>Coming soon: the Feed</Text>
+              <Text style={styles.teaserBody}>
+                {account.type === 'business'
+                  ? 'Get discovered by attendees searching your industry.'
+                  : 'Discover fairs near you and follow businesses you care about.'}
+              </Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
+
+      <SettingsSheet
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onTags={() => { setMenuOpen(false); router.push('/account/tags'); }}
+        onExport={async () => {
+          setMenuOpen(false);
+          try {
+            await exportContactsCsv({ eventId: null });
+          } catch (e) {
+            Alert.alert('Export failed', e instanceof Error ? e.message : String(e));
+          }
+        }}
+        onAbout={() => { setMenuOpen(false); router.push('/account/about'); }}
+      />
     </Screen>
+  );
+}
+
+function SettingsSheet({
+  visible, onClose, onTags, onExport, onAbout,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onTags: () => void;
+  onExport: () => void;
+  onAbout: () => void;
+}) {
+  const items: Array<{ icon: React.ComponentProps<typeof Icon>['name']; label: string; sub: string; onPress: () => void; tint?: string }> = [
+    { icon: 'pricetags-outline', label: 'Manage tags', sub: 'Create, rename, recolor', onPress: onTags },
+    { icon: 'share-outline', label: 'Export all contacts', sub: 'CSV via share sheet', onPress: onExport },
+    { icon: 'information-circle-outline', label: 'About Glean', sub: 'Version & info', onPress: onAbout },
+  ];
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable onPress={onClose} style={styles.backdrop}>
+        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+          <View style={styles.handle} />
+          <Text style={styles.sheetTitle}>Settings</Text>
+          {items.map((it) => (
+            <Pressable key={it.label} onPress={it.onPress} style={styles.sheetRow}>
+              <View style={styles.sheetIcon}>
+                <Icon name={it.icon} size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sheetRowLabel}>{it.label}</Text>
+                <Text style={styles.sheetRowSub}>{it.sub}</Text>
+              </View>
+              <Icon name="chevron-forward" size={16} color={colors.textTertiary} />
+            </Pressable>
+          ))}
+          <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Text style={styles.closeText}>Done</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16, paddingBottom: 60 },
-  screenTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    padding: 14,
-    marginTop: 8,
-    ...elevation.card,
-  },
-  addRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  swatchRow: {
+  header: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingTop: 4,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 4,
   },
-  swatch: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
+  screenTitle: { ...typography.largeTitle, color: colors.textPrimary },
+  menuBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: colors.borderSoft,
   },
-  swatchSelected: {
-    borderColor: colors.textPrimary,
-  },
-  addInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  addBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  addBtnLabel: { color: colors.surface, fontWeight: '700' },
-  tagRow: {
+  scroll: { padding: 16, paddingBottom: 60 },
+
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: colors.background,
+    gap: 14,
+    padding: 16,
+    borderRadius: radius.card,
+    backgroundColor: colors.surface,
+    ...elevation.card,
   },
-  tagDot: { width: 10, height: 10, borderRadius: 5 },
-  tagLabel: { fontSize: 15, color: colors.textPrimary },
-  tagCount: { fontSize: 13, color: colors.textSecondary },
-  deleteAction: { color: colors.danger, fontSize: 13, fontWeight: '600' },
-  actionCard: { paddingVertical: 16 },
-  actionLabel: { fontSize: 16, fontWeight: '600', color: colors.primary },
-  actionHint: { ...typography.secondary, marginTop: 4 },
-  empty: { textAlign: 'center', paddingVertical: 12, color: colors.textSecondary },
-  bodyText: { fontSize: 14, color: colors.textPrimary },
-  linkRow: {
+  profileAvatar: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  profileInitials: { color: colors.surface, fontSize: 22, fontWeight: '700', letterSpacing: 0.5 },
+  profileName: { ...typography.headline, color: colors.textPrimary },
+  profileSub: { ...typography.tertiary, color: colors.textSecondary, marginTop: 2 },
+  roleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  rolePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill,
+  },
+  rolePillCust: { backgroundColor: colors.primarySoft },
+  rolePillBiz: { backgroundColor: colors.warmTint },
+  rolePillText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.4 },
+  editLink: { color: colors.primary, fontSize: 12, fontWeight: '600' },
+
+  registerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderRadius: radius.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    ...elevation.card,
+  },
+  registerIconWrap: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  registerTitle: { ...typography.headline, color: colors.textPrimary },
+  registerBody: { ...typography.tertiary, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
+
+  linkCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 14,
+    paddingHorizontal: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    marginTop: 8,
+    ...elevation.card,
   },
   iconCircle: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: colors.primarySoft,
     alignItems: 'center', justifyContent: 'center',
   },
   linkLabel: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
   linkHint: { ...typography.tertiary, marginTop: 2 },
+
+  teaserCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 18,
+    padding: 14,
+    borderRadius: radius.card,
+    backgroundColor: colors.warmTint,
+  },
+  teaserIcon: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#FFFFFF80',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  teaserTitle: { fontSize: 14, fontWeight: '700', color: colors.accent },
+  teaserBody: { ...typography.tertiary, color: colors.textPrimary, marginTop: 2, lineHeight: 16 },
+
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 10,
+    paddingBottom: 28,
+    paddingHorizontal: 18,
+  },
+  handle: {
+    width: 36, height: 4, borderRadius: 2,
+    backgroundColor: colors.border,
+    alignSelf: 'center', marginBottom: 12,
+  },
+  sheetTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  sheetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  sheetIcon: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sheetRowLabel: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  sheetRowSub: { ...typography.tertiary, marginTop: 2 },
+  closeBtn: {
+    marginTop: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: radius.card,
+    backgroundColor: colors.primary,
+  },
+  closeText: { color: colors.surface, fontWeight: '700', fontSize: 15 },
 });

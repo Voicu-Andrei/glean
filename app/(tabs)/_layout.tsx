@@ -23,11 +23,15 @@ function CenterTabButton({ onPress, accessibilityState }: {
           tap();
           onPress?.();
         }}
-        style={[styles.centerBtn, selected && styles.centerBtnActive]}
+        style={[styles.centerBtn, selected ? styles.centerBtnSelected : styles.centerBtnIdle]}
         accessibilityRole="button"
         accessibilityLabel="Dashboard"
       >
-        <Icon name="grid" size={24} color={colors.surface} />
+        <Icon
+          name="grid"
+          size={24}
+          color={selected ? colors.surface : colors.primary}
+        />
       </Pressable>
     </View>
   );
@@ -97,8 +101,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: tabIcon('settings', 'settings-outline'),
+          title: 'Account',
+          tabBarIcon: tabIcon('person-circle', 'person-circle-outline'),
         }}
       />
     </Tabs>
@@ -117,12 +121,16 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...elevation.fab,
     borderWidth: 4,
     borderColor: colors.surface,
   },
-  centerBtnActive: { backgroundColor: colors.primaryDark },
+  centerBtnIdle: {
+    backgroundColor: colors.primarySoft,
+  },
+  centerBtnSelected: {
+    backgroundColor: colors.primary,
+    ...elevation.fab,
+  },
 });

@@ -62,6 +62,9 @@ export default function RootLayout() {
         <Stack.Screen name="event/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="settings/my-card" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="account/register" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="account/tags" />
+        <Stack.Screen name="account/about" />
         <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
       </Stack>
     </>
