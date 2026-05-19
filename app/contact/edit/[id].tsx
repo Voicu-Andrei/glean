@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '../../../src/components/Screen';
+import { DateField } from '../../../src/components/DateField';
 import { InterestPicker } from '../../../src/components/InterestPicker';
 import { TagChip } from '../../../src/components/TagChip';
 import { getContact, updateContact } from '../../../src/db/contacts';
@@ -167,8 +168,15 @@ export default function EditContactScreen() {
             </View>
           </Field>
 
-          <Field label="Follow-up Date (YYYY-MM-DD)">
-            <TextInput value={followUpDate} onChangeText={setFollowUpDate} placeholder="2026-06-15" placeholderTextColor={colors.textSecondary} style={styles.input} autoCapitalize="none" />
+          <Field label="Follow-up Date">
+            <DateField
+              value={followUpDate || null}
+              onChange={(v) => setFollowUpDate(v ?? '')}
+              mode="date"
+              placeholder="Pick a date"
+              optional
+              minimumDate={new Date()}
+            />
           </Field>
           <Field label="Follow-up Notes">
             <TextInput value={followUpNotes} onChangeText={setFollowUpNotes} style={[styles.input, styles.multiline]} multiline />

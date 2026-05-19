@@ -18,6 +18,7 @@ export type ContactRow = {
   follow_up_date: string | null;
   follow_up_notes: string | null;
   follow_up_done: number;
+  marked_complete: number;
   created_at: string;
   updated_at: string;
   is_complete: number;
@@ -192,6 +193,15 @@ export async function cycleInterest(id: number): Promise<InterestLevel | null> {
     id,
   );
   return next;
+}
+
+export async function markComplete(id: number, value: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    "UPDATE contacts SET marked_complete = ?, updated_at = datetime('now') WHERE id = ?;",
+    value ? 1 : 0,
+    id,
+  );
 }
 
 export async function setFollowUpDone(id: number, done: boolean): Promise<void> {

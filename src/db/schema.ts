@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SCHEMA_SQL = `
 PRAGMA foreign_keys = ON;
@@ -34,18 +34,23 @@ CREATE TABLE IF NOT EXISTS contacts (
     follow_up_date  TEXT,
     follow_up_notes TEXT,
     follow_up_done  INTEGER NOT NULL DEFAULT 0,
+    marked_complete INTEGER NOT NULL DEFAULT 0,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE VIEW IF NOT EXISTS contacts_with_completeness AS
+DROP VIEW IF EXISTS contacts_with_completeness;
+CREATE VIEW contacts_with_completeness AS
 SELECT c.*,
   CASE WHEN
-       c.company_name IS NOT NULL AND length(trim(c.company_name)) > 0
-       AND c.contact_name IS NOT NULL AND length(trim(c.contact_name)) > 0
-       AND ((c.email IS NOT NULL AND length(trim(c.email)) > 0)
-            OR (c.phone IS NOT NULL AND length(trim(c.phone)) > 0))
-       AND c.interest_level IS NOT NULL
+       c.marked_complete = 1
+       OR (
+         c.company_name IS NOT NULL AND length(trim(c.company_name)) > 0
+         AND c.contact_name IS NOT NULL AND length(trim(c.contact_name)) > 0
+         AND ((c.email IS NOT NULL AND length(trim(c.email)) > 0)
+              OR (c.phone IS NOT NULL AND length(trim(c.phone)) > 0))
+         AND c.interest_level IS NOT NULL
+       )
        THEN 1 ELSE 0 END AS is_complete
 FROM contacts c;
 

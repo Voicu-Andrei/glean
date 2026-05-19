@@ -13,26 +13,30 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
+import { DateField } from '../../src/components/DateField';
 import { createEvent } from '../../src/db/events';
 import { colors, radius, typography } from '../../src/theme';
 import { todayIso } from '../../src/utils/format';
+import { success, warning } from '../../src/utils/haptics';
 
 export default function NewEventScreen() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
-  const [startDate, setStartDate] = useState(todayIso());
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<string | null>(`${todayIso()}T09:00`);
+  const [endDate, setEndDate] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [setActive, setSetActive] = useState(true);
   const [saving, setSaving] = useState(false);
 
   async function onSave() {
     if (!name.trim()) {
+      warning();
       Alert.alert('Name required', 'Please give this event a name.');
       return;
     }
-    if (!startDate.trim()) {
+    if (!startDate) {
+      warning();
       Alert.alert('Start date required');
       return;
     }
@@ -41,11 +45,12 @@ export default function NewEventScreen() {
       await createEvent({
         name: name.trim(),
         location: location.trim() || null,
-        start_date: startDate.trim(),
-        end_date: endDate.trim() || null,
+        start_date: startDate,
+        end_date: endDate ?? null,
         notes: notes.trim() || null,
         set_active: setActive,
       });
+      success();
       router.back();
     } catch (e) {
       Alert.alert('Could not save', e instanceof Error ? e.message : String(e));
@@ -76,11 +81,11 @@ export default function NewEventScreen() {
           <Field label="Location">
             <TextInput value={location} onChangeText={setLocation} style={styles.input} placeholder="Paris" placeholderTextColor={colors.textSecondary} autoCapitalize="words" />
           </Field>
-          <Field label="Start Date (YYYY-MM-DD) *">
-            <TextInput value={startDate} onChangeText={setStartDate} style={styles.input} autoCapitalize="none" />
+          <Field label="Starts *">
+            <DateField value={startDate} onChange={setStartDate} mode="datetime" placeholder="Pick a date & time" />
           </Field>
-          <Field label="End Date (YYYY-MM-DD)">
-            <TextInput value={endDate} onChangeText={setEndDate} style={styles.input} autoCapitalize="none" placeholder="Optional" placeholderTextColor={colors.textSecondary} />
+          <Field label="Ends">
+            <DateField value={endDate} onChange={setEndDate} mode="datetime" placeholder="Optional" optional />
           </Field>
           <Field label="Notes">
             <TextInput value={notes} onChangeText={setNotes} style={[styles.input, styles.multiline]} multiline />
