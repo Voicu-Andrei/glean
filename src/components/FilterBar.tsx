@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { colors, radius } from '../theme';
@@ -43,6 +44,7 @@ export function FilterBar({ state, onChange }: Props) {
   const [open, setOpen] = useState<'filter' | 'sort' | null>(null);
   const [events, setEvents] = useState<EventWithCount[]>([]);
   const [tags, setTags] = useState<TagRow[]>([]);
+  const [eventQuery, setEventQuery] = useState('');
 
   useEffect(() => {
     void listEvents().then(setEvents);
@@ -106,21 +108,58 @@ export function FilterBar({ state, onChange }: Props) {
 
       <Sheet visible={open === 'filter'} title="Filter contacts" onClose={() => setOpen(null)}>
         <Group label="Event">
-          <ChipRow>
-            <SelectChip
-              label="All"
-              selected={state.eventId == null}
-              onPress={() => onChange({ ...state, eventId: null })}
-            />
-            {events.map((e) => (
-              <SelectChip
-                key={e.id}
-                label={`${e.name} (${e.contact_count})`}
-                selected={state.eventId === e.id}
-                onPress={() => onChange({ ...state, eventId: e.id })}
+          {events.length > 6 && (
+            <View style={styles.eventSearchWrap}>
+              <Icon name="search" size={14} color={colors.textSecondary} />
+              <TextInput
+                value={eventQuery}
+                onChangeText={setEventQuery}
+                placeholder="Search events"
+                placeholderTextColor={colors.textSecondary}
+                style={styles.eventSearchInput}
+                autoCorrect={false}
+                autoCapitalize="none"
+                clearButtonMode="while-editing"
               />
-            ))}
-          </ChipRow>
+            </View>
+          )}
+          {(() => {
+            const q = eventQuery.trim().toLowerCase();
+            const filtered = q
+              ? events.filter(
+                  (e) =>
+                    e.name.toLowerCase().includes(q) ||
+                    (e.location ?? '').toLowerCase().includes(q),
+                )
+              : events;
+            return (
+              <>
+                <ChipRow>
+                  <SelectChip
+                    label="All"
+                    selected={state.eventId == null}
+                    onPress={() => onChange({ ...state, eventId: null })}
+                  />
+                  {filtered.slice(0, 60).map((e) => (
+                    <SelectChip
+                      key={e.id}
+                      label={`${e.name} (${e.contact_count})`}
+                      selected={state.eventId === e.id}
+                      onPress={() => onChange({ ...state, eventId: e.id })}
+                    />
+                  ))}
+                </ChipRow>
+                {filtered.length === 0 && q.length > 0 && (
+                  <Text style={styles.empty}>No events match "{eventQuery}"</Text>
+                )}
+                {filtered.length > 60 && (
+                  <Text style={[styles.empty, { paddingVertical: 6 }]}>
+                    Showing 60 of {filtered.length}. Search to narrow.
+                  </Text>
+                )}
+              </>
+            );
+          })()}
         </Group>
 
         <Group label="Interest">
@@ -352,4 +391,15 @@ const styles = StyleSheet.create({
   clearBtn: { paddingVertical: 10, alignItems: 'center' },
   clearText: { color: colors.danger, fontWeight: '600', fontSize: 13 },
   empty: { paddingVertical: 12, textAlign: 'center', color: colors.textSecondary, fontSize: 13 },
+  eventSearchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.backgroundSoft,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  eventSearchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, paddingVertical: 4 },
 });

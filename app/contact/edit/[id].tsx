@@ -17,7 +17,7 @@ import { InterestPicker } from '../../../src/components/InterestPicker';
 import { TagChip } from '../../../src/components/TagChip';
 import { getContact, updateContact } from '../../../src/db/contacts';
 import { listEvents, type EventWithCount } from '../../../src/db/events';
-import { listTags, setContactTags, tagsForContact, type TagRow } from '../../../src/db/tags';
+import { listTags, setContactTags, tagsForContact, MAX_TAGS_PER_CONTACT, type TagRow } from '../../../src/db/tags';
 import { colors, radius, elevation, typography, type InterestLevel } from '../../../src/theme';
 
 export default function EditContactScreen() {
@@ -98,9 +98,17 @@ export default function EditContactScreen() {
   }
 
   function toggleTag(tagId: number) {
-    setSelectedTagIds((prev) =>
-      prev.includes(tagId) ? prev.filter((x) => x !== tagId) : [...prev, tagId],
-    );
+    setSelectedTagIds((prev) => {
+      if (prev.includes(tagId)) return prev.filter((x) => x !== tagId);
+      if (prev.length >= MAX_TAGS_PER_CONTACT) {
+        Alert.alert(
+          'Tag limit reached',
+          `A contact can have at most ${MAX_TAGS_PER_CONTACT} tags. Remove one to add another.`,
+        );
+        return prev;
+      }
+      return [...prev, tagId];
+    });
   }
 
   if (loading) return <Screen style={styles.flex}><View /></Screen>;
@@ -153,18 +161,23 @@ export default function EditContactScreen() {
             </View>
           </Field>
 
-          <Field label="Tags">
+          <Field label={`Tags (${selectedTagIds.length}/${MAX_TAGS_PER_CONTACT})`}>
             <View style={styles.tagWrap}>
               {allTags.length === 0 && <Text style={styles.muted}>No tags yet — create some in Settings.</Text>}
-              {allTags.map((t) => (
-                <TagChip
-                  key={t.id}
-                  label={t.name}
-                  color={t.color}
-                  selected={selectedTagIds.includes(t.id)}
-                  onPress={() => toggleTag(t.id)}
-                />
-              ))}
+              {allTags.map((t) => {
+                const selected = selectedTagIds.includes(t.id);
+                const atLimit = !selected && selectedTagIds.length >= MAX_TAGS_PER_CONTACT;
+                return (
+                  <View key={t.id} style={atLimit ? { opacity: 0.4 } : undefined}>
+                    <TagChip
+                      label={t.name}
+                      color={t.color}
+                      selected={selected}
+                      onPress={() => toggleTag(t.id)}
+                    />
+                  </View>
+                );
+              })}
             </View>
           </Field>
 

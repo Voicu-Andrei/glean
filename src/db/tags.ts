@@ -1,5 +1,7 @@
 import { getDb } from './index';
 
+export const MAX_TAGS_PER_CONTACT = 10;
+
 export type TagRow = {
   id: number;
   name: string;
@@ -56,10 +58,14 @@ export async function tagsForContact(contactId: number): Promise<TagRow[]> {
 }
 
 export async function setContactTags(contactId: number, tagIds: number[]): Promise<void> {
+  const unique = Array.from(new Set(tagIds));
+  if (unique.length > MAX_TAGS_PER_CONTACT) {
+    throw new Error(`A contact can have at most ${MAX_TAGS_PER_CONTACT} tags.`);
+  }
   const db = await getDb();
   await db.withTransactionAsync(async () => {
     await db.runAsync('DELETE FROM contact_tags WHERE contact_id = ?;', contactId);
-    for (const tid of tagIds) {
+    for (const tid of unique) {
       await db.runAsync(
         'INSERT OR IGNORE INTO contact_tags (contact_id, tag_id) VALUES (?, ?);',
         contactId,
@@ -71,6 +77,13 @@ export async function setContactTags(contactId: number, tagIds: number[]): Promi
 
 export async function attachTag(contactId: number, tagId: number): Promise<void> {
   const db = await getDb();
+  const row = await db.getFirstAsync<{ n: number }>(
+    'SELECT COUNT(*) AS n FROM contact_tags WHERE contact_id = ?;',
+    contactId,
+  );
+  if ((row?.n ?? 0) >= MAX_TAGS_PER_CONTACT) {
+    throw new Error(`A contact can have at most ${MAX_TAGS_PER_CONTACT} tags.`);
+  }
   await db.runAsync(
     'INSERT OR IGNORE INTO contact_tags (contact_id, tag_id) VALUES (?, ?);',
     contactId,
