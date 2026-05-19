@@ -40,6 +40,12 @@
           "photosPermission": "Glean lets you attach photos from your library to contacts you meet at trade fairs.",
           "cameraPermission": "Glean uses the camera to capture business cards and booth photos at trade fairs."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Glean uses the camera to scan QR cards from other people you meet."
+        }
       ]
     ],
     "experiments": {

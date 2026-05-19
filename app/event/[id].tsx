@@ -7,9 +7,11 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Switch } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { ContactCard } from '../../src/components/ContactCard';
+import { Icon } from '../../src/components/Icon';
 import { deleteEvent, getEvent, setActiveEvent, type EventRow } from '../../src/db/events';
 import { listContacts, type ContactListItem } from '../../src/db/contacts';
 import { exportContactsCsv } from '../../src/utils/export';
@@ -87,16 +89,33 @@ export default function EventDetailScreen() {
         <Text style={[typography.secondary, { marginTop: 4 }]}>
           {contacts.length} {contacts.length === 1 ? 'contact' : 'contacts'}
         </Text>
-        <View style={styles.btnRow}>
-          <Pressable onPress={() => void onToggleActive()} style={[styles.actionBtn, event.is_active === 1 && styles.actionBtnPrimary]}>
-            <Text style={[styles.actionLabel, event.is_active === 1 && { color: colors.surface }]}>
-              {event.is_active === 1 ? '✓ Active Event' : 'Set as Active'}
-            </Text>
-          </Pressable>
-          <Pressable onPress={() => void onExport()} style={styles.actionBtn}>
-            <Text style={styles.actionLabel}>Export CSV</Text>
-          </Pressable>
+
+        <View style={styles.statusRow}>
+          <View style={styles.statusLeft}>
+            <View style={[styles.statusDot, { backgroundColor: event.is_active === 1 ? colors.success : colors.border }]} />
+            <View>
+              <Text style={styles.statusLabel}>
+                {event.is_active === 1 ? 'Active right now' : 'Not active'}
+              </Text>
+              <Text style={styles.statusHint}>
+                {event.is_active === 1
+                  ? 'New contacts auto-attach to this event'
+                  : 'Turn on to capture contacts here'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={event.is_active === 1}
+            onValueChange={() => void onToggleActive()}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            ios_backgroundColor={colors.border}
+          />
         </View>
+
+        <Pressable onPress={() => void onExport()} style={styles.exportBtn}>
+          <Icon name="share-outline" size={16} color={colors.primary} />
+          <Text style={styles.exportBtnLabel}>Export CSV</Text>
+        </Pressable>
       </View>
       <FlatList
         data={contacts}
@@ -143,18 +162,32 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
   subtitle: { ...typography.secondary, marginTop: 4 },
-  btnRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: colors.background,
+  statusRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    gap: 8,
   },
-  actionBtnPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
-  actionLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  statusLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  statusDot: { width: 10, height: 10, borderRadius: 5 },
+  statusLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  statusHint: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  exportBtn: {
+    marginTop: 10,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  exportBtnLabel: { color: colors.primary, fontSize: 14, fontWeight: '600' },
   listContent: { paddingHorizontal: 14, paddingBottom: 60 },
   empty: { padding: 32, alignItems: 'center' },
   deleteBtn: { marginTop: 28, padding: 14, alignItems: 'center' },

@@ -1,12 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { enableScreens } from 'react-native-screens';
+import * as SplashScreen from 'expo-splash-screen';
 import { getDb } from '../src/db';
+import { autoBalanceActiveEvent } from '../src/db/events';
 import { colors, typography } from '../src/theme';
 
 enableScreens(false);
+
+// Keep the native splash visible while we init; minimum visible time below.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+const MIN_SPLASH_MS = 900;
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -14,22 +21,29 @@ export default function RootLayout() {
 
   useEffect(() => {
     let mounted = true;
+    const startedAt = Date.now();
     (async () => {
       try {
         await getDb();
+        await autoBalanceActiveEvent();
+        const elapsed = Date.now() - startedAt;
+        const wait = Math.max(0, MIN_SPLASH_MS - elapsed);
+        if (wait) await new Promise((r) => setTimeout(r, wait));
         if (mounted) setReady(true);
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : String(e));
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
+
+  const onLayoutHide = useCallback(() => {
+    if (ready || error) SplashScreen.hideAsync().catch(() => {});
+  }, [ready, error]);
 
   if (error) {
     return (
-      <View style={styles.splash}>
+      <View style={styles.splash} onLayout={onLayoutHide}>
         <Image source={require('../assets/icon.png')} style={styles.splashLogo} />
         <Text style={styles.brand}>Glean</Text>
         <Text style={styles.errTitle}>Could not open database</Text>
@@ -40,7 +54,7 @@ export default function RootLayout() {
 
   if (!ready) {
     return (
-      <View style={styles.splash}>
+      <View style={styles.splash} onLayout={onLayoutHide}>
         <Image source={require('../assets/icon.png')} style={styles.splashLogo} />
         <Text style={styles.brand}>Glean</Text>
         <Text style={styles.tagline}>Capture every connection</Text>
@@ -52,7 +66,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <View style={{ flex: 1 }} onLayout={onLayoutHide}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" />
@@ -61,8 +75,10 @@ export default function RootLayout() {
         <Stack.Screen name="contact/edit/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="event/new" options={{ presentation: 'modal' }} />
         <Stack.Screen name="event/[id]" />
+        <Stack.Screen name="settings/my-card" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
       </Stack>
-    </>
+    </View>
   );
 }
 
