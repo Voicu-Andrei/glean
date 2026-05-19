@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { colors, elevation } from '../../src/theme';
 import { useIncompleteCount } from '../../src/hooks/useContacts';
@@ -11,11 +11,11 @@ function tabIcon(focused: IconName, blurred: IconName) {
   );
 }
 
-function CenterTabButton({ onPress, accessibilityState }: {
-  onPress?: () => void;
-  accessibilityState?: { selected?: boolean };
-}) {
-  const selected = accessibilityState?.selected;
+function CenterTabButton({ onPress }: { onPress?: () => void }) {
+  const pathname = usePathname();
+  // Pathname for the dashboard tab can be '/dashboard' or '/' depending on
+  // router state; treat dashboard segment OR root as selected.
+  const selected = pathname === '/dashboard' || pathname?.endsWith('/dashboard') === true;
   return (
     <View style={styles.centerWrap} pointerEvents="box-none">
       <Pressable
@@ -77,10 +77,7 @@ export default function TabsLayout() {
         options={{
           title: '',
           tabBarButton: (props) => (
-            <CenterTabButton
-              onPress={props.onPress as () => void}
-              accessibilityState={props.accessibilityState as { selected?: boolean }}
-            />
+            <CenterTabButton onPress={props.onPress as () => void} />
           ),
         }}
       />
