@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   FlatList,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -78,15 +77,6 @@ export default function ContactsScreen() {
         }
       />
       <FAB onPress={() => router.push('/contact/new')} />
-      <Pressable
-        onPress={() => router.push('/scan')}
-        style={styles.scanFab}
-        accessibilityRole="button"
-        accessibilityLabel="Scan QR card"
-        hitSlop={6}
-      >
-        <Icon name="qr-code" size={18} color={colors.primary} />
-      </Pressable>
     </Screen>
   );
 }
@@ -109,19 +99,6 @@ const styles = StyleSheet.create({
   searchIcon: { fontSize: 14, color: colors.textSecondary },
   searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary, paddingVertical: 6 },
   listContent: { padding: 14, paddingTop: 4, paddingBottom: 100 },
-  scanFab: {
-    position: 'absolute',
-    right: 28,
-    bottom: 92,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   empty: { alignItems: 'center', paddingTop: 90, paddingHorizontal: 32 },
   emptyIconWrap: {
     width: 72, height: 72, borderRadius: 36,

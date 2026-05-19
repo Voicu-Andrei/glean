@@ -40,9 +40,6 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
        FROM contacts c;`,
     );
   }
-  await db.execAsync(
-    `CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT);`,
-  );
 }
 
 async function seedTagsIfEmpty(db: SQLite.SQLiteDatabase): Promise<void> {

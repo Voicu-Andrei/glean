@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 2;
 
 export const SCHEMA_SQL = `
 PRAGMA foreign_keys = ON;
@@ -74,11 +74,6 @@ CREATE TABLE IF NOT EXISTS contact_tags (
     contact_id  INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
     tag_id      INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (contact_id, tag_id)
-);
-
-CREATE TABLE IF NOT EXISTS app_settings (
-    key   TEXT PRIMARY KEY,
-    value TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_contacts_event_id ON contacts(event_id);
