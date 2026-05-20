@@ -2,7 +2,9 @@ export const colors = {
   primary: '#1A6B6B',
   primarySoft: '#E4EFEF',
   primaryDark: '#125252',
+  primaryDeeper: '#0C3C3C',
   accent: '#D4820A',
+  accentSoft: '#FEF6E8',
   cold: '#5B7FA6',
   background: '#F7F5F2',
   backgroundSoft: '#EFEDE8',
@@ -22,6 +24,8 @@ export const colors = {
   coldTint: '#EEF2F7',
   danger: '#C73E1D',
   success: '#2E7D32',
+  pulse: '#9DE0AD',
+  hotNumeral: '#FBC68B',
 } as const;
 
 export const radius = {

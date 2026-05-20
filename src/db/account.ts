@@ -1,5 +1,24 @@
 import { getDb } from './index';
 
+export type AccountStats = {
+  events: number;
+  contacts: number;
+  hot: number;
+  tags: number;
+};
+
+export async function getAccountStats(): Promise<AccountStats> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<AccountStats>(
+    `SELECT
+       (SELECT COUNT(*) FROM events) AS events,
+       (SELECT COUNT(*) FROM contacts) AS contacts,
+       (SELECT COUNT(*) FROM contacts WHERE interest_level = 'hot') AS hot,
+       (SELECT COUNT(*) FROM tags) AS tags;`,
+  );
+  return row ?? { events: 0, contacts: 0, hot: 0, tags: 0 };
+}
+
 export type AccountType = 'customer' | 'business';
 
 export type Account = {
