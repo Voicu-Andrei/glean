@@ -4,6 +4,10 @@ export type AccountStats = {
   events: number;
   contacts: number;
   hot: number;
+  warm: number;
+  cold: number;
+  thisWeek: number;
+  drafts: number;
   tags: number;
 };
 
@@ -14,9 +18,13 @@ export async function getAccountStats(): Promise<AccountStats> {
        (SELECT COUNT(*) FROM events) AS events,
        (SELECT COUNT(*) FROM contacts) AS contacts,
        (SELECT COUNT(*) FROM contacts WHERE interest_level = 'hot') AS hot,
+       (SELECT COUNT(*) FROM contacts WHERE interest_level = 'warm') AS warm,
+       (SELECT COUNT(*) FROM contacts WHERE interest_level = 'cold') AS cold,
+       (SELECT COUNT(*) FROM contacts WHERE date(date_met) >= date('now', '-7 days')) AS thisWeek,
+       (SELECT COUNT(*) FROM contacts_with_completeness WHERE is_complete = 0) AS drafts,
        (SELECT COUNT(*) FROM tags) AS tags;`,
   );
-  return row ?? { events: 0, contacts: 0, hot: 0, tags: 0 };
+  return row ?? { events: 0, contacts: 0, hot: 0, warm: 0, cold: 0, thisWeek: 0, drafts: 0, tags: 0 };
 }
 
 export type AccountType = 'customer' | 'business';

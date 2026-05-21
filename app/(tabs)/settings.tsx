@@ -31,7 +31,7 @@ export default function AccountScreen() {
   const router = useRouter();
   const [account, setAccount] = useState<Account | null>(null);
   const [myCard, setMyCard] = useState<MyCard | null>(null);
-  const [stats, setStats] = useState<AccountStats>({ events: 0, contacts: 0, hot: 0, tags: 0 });
+  const [stats, setStats] = useState<AccountStats>({ events: 0, contacts: 0, hot: 0, warm: 0, cold: 0, thisWeek: 0, drafts: 0, tags: 0 });
 
   const reload = useCallback(async () => {
     setAccount(await getAccount());
