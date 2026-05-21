@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 import { getDb } from './index';
 
 export type PhotoType = 'business_card' | 'booth' | 'additional';
@@ -93,6 +94,27 @@ export async function deletePhoto(id: number): Promise<void> {
     await FileSystem.deleteAsync(fullPathFor(row.file_path), { idempotent: true });
   }
   await db.runAsync('DELETE FROM photos WHERE id = ?;', id);
+}
+
+/** Save one photo to the device camera roll. Returns false if permission denied. */
+export async function savePhotoToLibrary(relativeFilePath: string): Promise<boolean> {
+  const perm = await MediaLibrary.requestPermissionsAsync();
+  if (!perm.granted) return false;
+  await MediaLibrary.saveToLibraryAsync(fullPathFor(relativeFilePath));
+  return true;
+}
+
+/** Save all of a contact's photos to the camera roll. Returns count saved, or -1 if denied. */
+export async function saveAllPhotosToLibrary(contactId: number): Promise<number> {
+  const perm = await MediaLibrary.requestPermissionsAsync();
+  if (!perm.granted) return -1;
+  const rows = await listPhotos(contactId);
+  let n = 0;
+  for (const r of rows) {
+    await MediaLibrary.saveToLibraryAsync(fullPathFor(r.file_path));
+    n++;
+  }
+  return n;
 }
 
 export async function deletePhotoFilesForContact(contactId: number): Promise<void> {

@@ -49,14 +49,39 @@ export default function DashboardScreen() {
             </FieldReportHero>
           </Pressable>
         ) : (
-          <Pressable onPress={() => router.push('/(tabs)/events')} style={styles.coverEmpty}>
-            <Icon name="calendar-outline" size={20} color={colors.textSecondary} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.emptyEventTitle}>No active event</Text>
-              <Text style={styles.emptyEventBody}>Pick one before capturing</Text>
-            </View>
-            <Icon name="chevron-forward" size={18} color={colors.textTertiary} />
-          </Pressable>
+          <FieldReportHero
+            kicker="FIELD REPORT"
+            title={
+              <Text style={styles.heroTitle}>
+                {stats.totalContacts > 0 ? 'Between' : 'Welcome'}
+                {'\n'}
+                <Text style={styles.heroTitleLight}>{stats.totalContacts > 0 ? 'shows.' : 'to Glean.'}</Text>
+              </Text>
+            }
+            meta={[
+              stats.totalContacts > 0 ? `${stats.totalContacts} contacts` : 'Your offline field CRM',
+              stats.totalContacts > 0 ? `${stats.hotCount} hot leads` : undefined,
+            ]}
+          >
+            {stats.totalContacts > 0 && (
+              <View style={styles.statGrid}>
+                <StatPanel label="TOTAL" value={stats.totalContacts} sub="contacts" />
+                <View style={styles.statSep} />
+                <StatPanel label="HOT" value={stats.hotCount} valueColor={colors.hotNumeral} sub="leads" />
+                <View style={styles.statSep} />
+                <StatPanel label="THIS WK" value={stats.thisWeek} sub="captured" />
+              </View>
+            )}
+            <Pressable onPress={() => router.push('/event/new')} style={styles.heroCta}>
+              <Icon name="add" size={16} color={colors.primaryDeeper} />
+              <Text style={styles.heroCtaText}>
+                {stats.totalContacts > 0 ? 'Start your next event' : 'Create your first event'}
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => router.push('/(tabs)/events')} style={styles.heroSecondary} hitSlop={6}>
+              <Text style={styles.heroSecondaryText}>or pick from your events →</Text>
+            </Pressable>
+          </FieldReportHero>
         )}
 
         {stats.topHot.length > 0 && (
@@ -132,20 +157,6 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {stats.totalContacts === 0 && !ev && (
-          <View style={styles.welcomeEmpty}>
-            <View style={styles.welcomeIcon}>
-              <Icon name="sparkles" size={36} color={colors.primary} />
-            </View>
-            <Text style={styles.welcomeTitle}>Welcome to Glean</Text>
-            <Text style={styles.welcomeBody}>
-              Create an event, then start capturing companies you meet at the booth.
-            </Text>
-            <Pressable onPress={() => router.push('/event/new')} style={styles.welcomeCta}>
-              <Text style={styles.welcomeCtaText}>Create your first event</Text>
-            </Pressable>
-          </View>
-        )}
       </ScrollView>
       <FAB onPress={() => router.push('/contact/new')} />
     </Screen>
@@ -161,19 +172,14 @@ const styles = StyleSheet.create({
   scroll: { paddingTop: 8, paddingBottom: 100 },
 
   heroTitle: { fontSize: 38, fontWeight: '700', letterSpacing: -1.5, lineHeight: 40, color: '#FFFFFF' },
-
-  coverEmpty: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.card,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+  heroTitleLight: { color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
+  heroCta: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    marginTop: 22, backgroundColor: colors.pulse, paddingVertical: 12, borderRadius: 999,
   },
+  heroCtaText: { color: colors.primaryDeeper, fontWeight: '700', fontSize: 14 },
+  heroSecondary: { alignItems: 'center', paddingTop: 12 },
+  heroSecondaryText: { color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: 12 },
 
   statGrid: {
     flexDirection: 'row',

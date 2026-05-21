@@ -12,12 +12,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { colors, radius, typography } from '../theme';
 import {
   addPhoto,
-  deletePhoto,
   fullPathFor,
+  saveAllPhotosToLibrary,
   type PhotoRow,
   type PhotoType,
   updatePhotoLabel,
 } from '../db/photos';
+import { Icon } from './Icon';
+import { PhotoViewer } from './PhotoViewer';
+import { success, warning } from '../utils/haptics';
 
 type Props = {
   contactId: number;
@@ -30,38 +33,48 @@ const BUSINESS_CARD_LIMIT = 2;
 const BOOTH_LIMIT = 1;
 
 export function PhotoStrip({ contactId, photos, onChange }: Props) {
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
   const businessCards = photos.filter((p) => p.photo_type === 'business_card');
   const booth = photos.filter((p) => p.photo_type === 'booth');
   const additional = photos.filter((p) => p.photo_type === 'additional');
 
+  function openViewer(photo: PhotoRow) {
+    const idx = photos.findIndex((p) => p.id === photo.id);
+    setViewerIndex(idx >= 0 ? idx : 0);
+  }
+
+  async function onSaveAll() {
+    const n = await saveAllPhotosToLibrary(contactId);
+    if (n < 0) {
+      warning();
+      Alert.alert('Permission needed', 'Allow photo library access in Settings to save.');
+    } else if (n === 0) {
+      Alert.alert('No photos', 'Nothing to save yet.');
+    } else {
+      success();
+      Alert.alert('Saved', `${n} ${n === 1 ? 'photo' : 'photos'} saved to your camera roll.`);
+    }
+  }
+
   return (
     <View style={{ gap: 16 }}>
-      <PhotoSection
-        title="Business Card"
-        type="business_card"
-        contactId={contactId}
-        items={businessCards}
-        limit={BUSINESS_CARD_LIMIT}
+      {photos.length > 0 && (
+        <Pressable onPress={() => void onSaveAll()} style={styles.saveAll} hitSlop={6}>
+          <Icon name="download-outline" size={14} color={colors.primary} />
+          <Text style={styles.saveAllText}>Save all to camera roll</Text>
+        </Pressable>
+      )}
+
+      <PhotoSection title="Business Card" type="business_card" contactId={contactId} items={businessCards} limit={BUSINESS_CARD_LIMIT} onChange={onChange} onOpen={openViewer} />
+      <PhotoSection title="Booth Photo" type="booth" contactId={contactId} items={booth} limit={BOOTH_LIMIT} onChange={onChange} onOpen={openViewer} />
+      <PhotoSection title="Additional" type="additional" contactId={contactId} items={additional} limit={ADDITIONAL_LIMIT} onChange={onChange} onOpen={openViewer} />
+
+      <PhotoViewer
+        photos={photos}
+        startIndex={viewerIndex}
+        onClose={() => setViewerIndex(null)}
         onChange={onChange}
-        defaultLabel=""
-      />
-      <PhotoSection
-        title="Booth Photo"
-        type="booth"
-        contactId={contactId}
-        items={booth}
-        limit={BOOTH_LIMIT}
-        onChange={onChange}
-        defaultLabel=""
-      />
-      <PhotoSection
-        title="Additional"
-        type="additional"
-        contactId={contactId}
-        items={additional}
-        limit={ADDITIONAL_LIMIT}
-        onChange={onChange}
-        defaultLabel=""
       />
     </View>
   );
@@ -74,10 +87,10 @@ type SectionProps = {
   items: PhotoRow[];
   limit: number;
   onChange: () => void;
-  defaultLabel: string;
+  onOpen: (p: PhotoRow) => void;
 };
 
-function PhotoSection({ title, type, contactId, items, limit, onChange }: SectionProps) {
+function PhotoSection({ title, type, contactId, items, limit, onChange, onOpen }: SectionProps) {
   const [labeling, setLabeling] = useState<number | null>(null);
   const [labelDraft, setLabelDraft] = useState('');
 
@@ -109,20 +122,6 @@ function PhotoSection({ title, type, contactId, items, limit, onChange }: Sectio
     ]);
   }
 
-  function promptDelete(id: number) {
-    Alert.alert('Remove photo?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          await deletePhoto(id);
-          onChange();
-        },
-      },
-    ]);
-  }
-
   async function saveLabel(id: number) {
     await updatePhotoLabel(id, labelDraft.trim() || null);
     setLabeling(null);
@@ -137,13 +136,16 @@ function PhotoSection({ title, type, contactId, items, limit, onChange }: Sectio
         {items.map((p) => (
           <View key={p.id} style={styles.thumbWrap}>
             <Pressable
-              onPress={() => promptDelete(p.id)}
+              onPress={() => onOpen(p)}
               onLongPress={() => {
                 setLabeling(p.id);
                 setLabelDraft(p.label ?? '');
               }}
             >
               <Image source={{ uri: fullPathFor(p.file_path) }} style={styles.thumb} />
+              <View style={styles.expandBadge}>
+                <Icon name="expand" size={11} color="#FFFFFF" />
+              </View>
             </Pressable>
             {labeling === p.id ? (
               <View style={styles.labelEditor}>
@@ -174,40 +176,37 @@ function PhotoSection({ title, type, contactId, items, limit, onChange }: Sectio
         )}
       </View>
       {items.length > 0 && (
-        <Text style={styles.hint}>Tap to remove · long-press to label</Text>
+        <Text style={styles.hint}>Tap to view · long-press to label</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  saveAll: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    backgroundColor: colors.primarySoft, paddingVertical: 10, borderRadius: radius.md,
+  },
+  saveAllText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
   thumbWrap: { width: 72 },
-  thumb: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.card,
-    backgroundColor: colors.background,
+  thumb: { width: 72, height: 72, borderRadius: radius.card, backgroundColor: colors.background },
+  expandBadge: {
+    position: 'absolute', right: 4, bottom: 4,
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center', justifyContent: 'center',
   },
   thumbLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 4, textAlign: 'center' },
   labelEditor: { marginTop: 4 },
   labelInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    fontSize: 11,
+    borderWidth: 1, borderColor: colors.border, borderRadius: 6,
+    paddingHorizontal: 6, paddingVertical: 2, fontSize: 11,
   },
   addThumb: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 72, height: 72, borderRadius: radius.card,
+    borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border,
+    alignItems: 'center', justifyContent: 'center',
   },
   addPlus: { fontSize: 28, color: colors.textSecondary, lineHeight: 30 },
   hint: { fontSize: 11, color: colors.textSecondary, marginTop: 6 },

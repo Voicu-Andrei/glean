@@ -46,6 +46,14 @@
         {
           "cameraPermission": "Glean uses the camera to scan QR cards from other people you meet."
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Glean saves business card and booth photos to your camera roll when you download them.",
+          "savePhotosPermission": "Glean saves business card and booth photos to your camera roll when you download them.",
+          "isAccessMediaLocationEnabled": false
+        }
       ]
     ],
     "experiments": {

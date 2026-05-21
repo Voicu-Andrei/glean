@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,7 +17,8 @@ import { FieldReportHero } from '../../src/components/FieldReportHero';
 import { EditorialRow } from '../../src/components/EditorialRow';
 import { useContacts } from '../../src/hooks/useContacts';
 import { getAccountStats, type AccountStats } from '../../src/db/account';
-import { colors, interestMeta, type InterestLevel } from '../../src/theme';
+import { listEvents, type EventWithCount } from '../../src/db/events';
+import { colors, interestMeta, radius, type InterestLevel } from '../../src/theme';
 import type { ContactListItem } from '../../src/db/contacts';
 
 type InterestFilter = 'all' | InterestLevel;
@@ -48,10 +50,15 @@ export default function ContactsScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [interest, setInterest] = useState<InterestFilter>('all');
+  const [eventId, setEventId] = useState<number | null>(null);
+  const [eventSheet, setEventSheet] = useState(false);
+  const [eventQuery, setEventQuery] = useState('');
+  const [events, setEvents] = useState<EventWithCount[]>([]);
   const [stats, setStats] = useState<AccountStats>(EMPTY);
 
   const loadStats = useCallback(async () => {
     setStats(await getAccountStats());
+    setEvents(await listEvents());
   }, []);
   useEffect(() => { void loadStats(); }, [loadStats]);
   useFocusEffect(useCallback(() => { void loadStats(); }, [loadStats]));
@@ -59,8 +66,11 @@ export default function ContactsScreen() {
   const { data } = useContacts({
     search,
     interest: interest === 'all' ? null : interest,
+    event_id: eventId,
     sort: 'date_met_desc',
   });
+
+  const selectedEvent = eventId == null ? null : events.find((e) => e.id === eventId) ?? null;
 
   const groups = useMemo(() => {
     const today: ContactListItem[] = [];
@@ -173,6 +183,17 @@ export default function ContactsScreen() {
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+            <Pressable
+              onPress={() => { setEventQuery(''); setEventSheet(true); }}
+              style={[styles.chip, eventId != null && styles.chipActive]}
+              hitSlop={4}
+            >
+              <Icon name="calendar-outline" size={12} color={eventId != null ? colors.primary : colors.textSecondary} />
+              <Text style={[styles.chipLabel, eventId != null && styles.chipLabelActive]} numberOfLines={1}>
+                {selectedEvent ? selectedEvent.name : 'All events'}
+              </Text>
+              <Icon name="chevron-down" size={11} color={eventId != null ? colors.primary : colors.textTertiary} />
+            </Pressable>
             <Chip label="All" count={total} active={interest === 'all'} onPress={() => setInterest('all')} />
             <Chip label="Hot" dot={colors.hotDot} count={stats.hot} active={interest === 'hot'} onPress={() => setInterest('hot')} />
             <Chip label="Warm" dot={colors.warmDot} count={stats.warm} active={interest === 'warm'} onPress={() => setInterest('warm')} />
@@ -203,7 +224,59 @@ export default function ContactsScreen() {
         )}
       </ScrollView>
       <FAB onPress={() => router.push('/contact/new')} />
+
+      <Modal visible={eventSheet} transparent animationType="fade" onRequestClose={() => setEventSheet(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setEventSheet(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Filter by event</Text>
+            {events.length > 6 && (
+              <View style={styles.sheetSearch}>
+                <Icon name="search" size={14} color={colors.textSecondary} />
+                <TextInput
+                  value={eventQuery}
+                  onChangeText={setEventQuery}
+                  placeholder="Search events"
+                  placeholderTextColor={colors.textSecondary}
+                  style={styles.sheetSearchInput}
+                  autoCapitalize="none"
+                  clearButtonMode="while-editing"
+                />
+              </View>
+            )}
+            <ScrollView style={{ maxHeight: 380 }}>
+              <PickerRow
+                label="All events"
+                count={total}
+                selected={eventId == null}
+                onPress={() => { setEventId(null); setEventSheet(false); }}
+              />
+              {events
+                .filter((e) => !eventQuery.trim() || `${e.name} ${e.location ?? ''}`.toLowerCase().includes(eventQuery.trim().toLowerCase()))
+                .map((e) => (
+                  <PickerRow
+                    key={e.id}
+                    label={e.name}
+                    count={e.contact_count}
+                    selected={eventId === e.id}
+                    onPress={() => { setEventId(e.id); setEventSheet(false); }}
+                  />
+                ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
+  );
+}
+
+function PickerRow({ label, count, selected, onPress }: { label: string; count: number; selected: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.pickerRow}>
+      <Text style={[styles.pickerLabel, selected && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>{label}</Text>
+      <Text style={styles.pickerCount}>{count}</Text>
+      {selected && <Icon name="checkmark" size={16} color={colors.primary} />}
+    </Pressable>
   );
 }
 
@@ -281,4 +354,24 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
   emptyBody: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
+
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 10, paddingBottom: 28, paddingHorizontal: 18,
+  },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 12 },
+  sheetTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  sheetSearch: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: colors.backgroundSoft, borderRadius: radius.md,
+    paddingHorizontal: 10, paddingVertical: 6, marginBottom: 8,
+  },
+  sheetSearchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, paddingVertical: 4 },
+  pickerRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 14, borderBottomWidth: 1, borderColor: colors.borderSoft,
+  },
+  pickerLabel: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  pickerCount: { fontSize: 12, fontWeight: '700', color: colors.textTertiary, fontVariant: ['tabular-nums'] },
 });

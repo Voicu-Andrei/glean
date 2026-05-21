@@ -109,7 +109,7 @@ export default function EventsScreen() {
           </View>
         )}
 
-        {showActive && grouped.active && filter === 'active' && (
+        {showActive && grouped.active && (
           <View style={styles.section}>
             <SectionHeader kicker="◉ LIVE" kickerColor={colors.primary} title="Happening now." />
             <EditorialRow
