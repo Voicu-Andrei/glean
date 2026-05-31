@@ -143,6 +143,10 @@ export default function DashboardScreen() {
             <View style={styles.nextUpHead}>
               <Icon name="alarm-outline" size={13} color={colors.accent} />
               <Text style={styles.nextUpLabel}>NEXT UP</Text>
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={() => router.push('/meetings')} hitSlop={6}>
+                <Text style={styles.allLink}>All meetings →</Text>
+              </Pressable>
             </View>
             <Pressable
               onPress={() => router.push({ pathname: '/contact/[id]', params: { id: stats.nextFollowUp!.id } })}
@@ -153,6 +157,22 @@ export default function DashboardScreen() {
                 for{' '}
                 <Text style={styles.nextUpCompany}>{stats.nextFollowUp.company_name}</Text>.
               </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {!stats.nextFollowUp && stats.totalContacts > 0 && (
+          <View style={styles.section}>
+            <Pressable
+              onPress={() => router.push('/meetings')}
+              style={styles.meetingsCard}
+            >
+              <Icon name="alarm-outline" size={18} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.meetingsLabel}>Meetings</Text>
+                <Text style={styles.meetingsHint}>See and complete all follow-ups</Text>
+              </View>
+              <Icon name="chevron-forward" size={16} color={colors.textTertiary} />
             </Pressable>
           </View>
         )}
@@ -228,6 +248,15 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.divider,
   },
   nextUpLabel: { fontSize: 11, fontWeight: '700', color: colors.accent, letterSpacing: 1.2 },
+  allLink: { fontSize: 12, fontWeight: '600', color: colors.primary },
+  meetingsCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 14, paddingHorizontal: 14,
+    backgroundColor: colors.surface, borderRadius: 14,
+    borderWidth: 1, borderColor: colors.borderSoft,
+  },
+  meetingsLabel: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  meetingsHint: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   nextUpBody: { fontSize: 16, color: colors.textPrimary, letterSpacing: -0.2, lineHeight: 22 },
   nextUpStrong: { fontWeight: '700' },
   nextUpCompany: { color: colors.primary, fontWeight: '700' },

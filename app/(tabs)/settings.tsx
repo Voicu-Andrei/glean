@@ -16,7 +16,7 @@ import {
   type Account,
   type AccountStats,
 } from '../../src/db/account';
-import { exportContactsCsv } from '../../src/utils/export';
+import { exportContactsCsv, exportContactsZip } from '../../src/utils/export';
 import { colors, radius, typography } from '../../src/theme';
 
 function registeredLabel(iso: string | null): string {
@@ -56,6 +56,26 @@ export default function AccountScreen() {
     } catch (e) {
       Alert.alert('Export failed', e instanceof Error ? e.message : String(e));
     }
+  }
+
+  async function onExportZip() {
+    try {
+      await exportContactsZip({ eventId: null });
+    } catch (e) {
+      Alert.alert('Export failed', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function chooseExport() {
+    Alert.alert(
+      'Export contacts',
+      'Pick a format.',
+      [
+        { text: 'Full archive (.zip with photos)', onPress: () => void onExportZip() },
+        { text: 'CSV only (no photos)', onPress: () => void onExport() },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
   }
 
   function onResetProfile() {
@@ -199,10 +219,10 @@ export default function AccountScreen() {
           <ToolRow
             icon="share-outline"
             label="Export all contacts"
-            sub="CSV via share sheet"
+            sub="CSV or full archive with photos"
             count={`${stats.contacts} rows`}
             color={colors.primary}
-            onPress={() => void onExport()}
+            onPress={chooseExport}
           />
           <ToolRow
             icon="information-circle-outline"

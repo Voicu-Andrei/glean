@@ -74,7 +74,13 @@ export default function NewEventScreen() {
             <Text style={[styles.headerAction, { fontWeight: '700' }]}>Save</Text>
           </Pressable>
         </View>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
           <Field label="Name *">
             <TextInput value={name} onChangeText={setName} style={styles.input} autoCapitalize="words" autoFocus />
           </Field>

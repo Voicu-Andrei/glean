@@ -212,6 +212,30 @@ export async function markComplete(id: number, value: boolean): Promise<void> {
   );
 }
 
+export type FollowUpRow = {
+  id: number;
+  company_name: string;
+  contact_name: string | null;
+  role: string | null;
+  follow_up_date: string;
+  follow_up_notes: string | null;
+  follow_up_done: number;
+  event_name: string | null;
+};
+
+export async function listFollowUps(): Promise<FollowUpRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<FollowUpRow>(
+    `SELECT c.id, c.company_name, c.contact_name, c.role,
+            c.follow_up_date, c.follow_up_notes, c.follow_up_done,
+            e.name AS event_name
+       FROM contacts c
+       LEFT JOIN events e ON e.id = c.event_id
+       WHERE c.follow_up_date IS NOT NULL
+       ORDER BY c.follow_up_done ASC, c.follow_up_date ASC;`,
+  );
+}
+
 export async function setFollowUpDone(id: number, done: boolean): Promise<void> {
   const db = await getDb();
   await db.runAsync(

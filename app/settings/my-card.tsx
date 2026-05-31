@@ -111,7 +111,13 @@ export default function MyCardScreen() {
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
           {showQR && filled ? (
             <View style={styles.qrCard}>
               <Text style={styles.qrLabel}>SCAN TO SAVE MY DETAILS</Text>

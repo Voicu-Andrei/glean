@@ -177,7 +177,13 @@ export default function RegisterScreen() {
             </Text>
           </ScrollView>
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
             <Field label="Full Name *">
               <TextInput
                 value={account.name}

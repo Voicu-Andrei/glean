@@ -14,7 +14,7 @@ import { ContactCard } from '../../src/components/ContactCard';
 import { Icon } from '../../src/components/Icon';
 import { deleteEvent, getEvent, setActiveEvent, type EventRow } from '../../src/db/events';
 import { listContacts, type ContactListItem } from '../../src/db/contacts';
-import { exportContactsCsv } from '../../src/utils/export';
+import { exportContactsCsv, exportContactsZip } from '../../src/utils/export';
 import { colors, radius, elevation, typography } from '../../src/theme';
 import { formatDateRange } from '../../src/utils/format';
 
@@ -37,11 +37,27 @@ export default function EventDetailScreen() {
   if (!event) return <Screen style={styles.flex}><View /></Screen>;
 
   async function onExport() {
-    try {
-      await exportContactsCsv({ eventId: id, eventName: event!.name });
-    } catch (e) {
-      Alert.alert('Export failed', e instanceof Error ? e.message : String(e));
-    }
+    Alert.alert(
+      `Export ${event!.name}`,
+      'Pick a format.',
+      [
+        {
+          text: 'Full archive (.zip with photos)',
+          onPress: async () => {
+            try { await exportContactsZip({ eventId: id, eventName: event!.name }); }
+            catch (e) { Alert.alert('Export failed', e instanceof Error ? e.message : String(e)); }
+          },
+        },
+        {
+          text: 'CSV only',
+          onPress: async () => {
+            try { await exportContactsCsv({ eventId: id, eventName: event!.name }); }
+            catch (e) { Alert.alert('Export failed', e instanceof Error ? e.message : String(e)); }
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
   }
 
   async function onToggleActive() {

@@ -99,7 +99,13 @@ export default function NewContactScreen() {
         </View>
         <ActiveEventBanner event={activeEvent} />
 
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
           <Field label="Company Name *">
             <TextInput
               value={companyName}
@@ -250,7 +256,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   headerSave: { fontSize: 16, fontWeight: '700', color: colors.primary },
-  scroll: { padding: 16, paddingTop: 14, paddingBottom: 60 },
+  scroll: { padding: 16, paddingTop: 14, paddingBottom: 240 },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,

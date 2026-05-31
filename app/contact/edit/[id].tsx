@@ -129,7 +129,13 @@ export default function EditContactScreen() {
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          showsVerticalScrollIndicator={false}
+        >
           <Field label="Company Name *">
             <TextInput value={companyName} onChangeText={setCompanyName} style={styles.input} autoCapitalize="words" />
           </Field>

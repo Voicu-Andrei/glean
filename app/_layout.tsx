@@ -66,6 +66,7 @@ export default function RootLayout() {
         <Stack.Screen name="account/tags" />
         <Stack.Screen name="account/about" />
         <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="meetings" />
       </Stack>
     </>
   );

@@ -18,10 +18,19 @@ import { EditorialRow } from '../../src/components/EditorialRow';
 import { useContacts } from '../../src/hooks/useContacts';
 import { getAccountStats, type AccountStats } from '../../src/db/account';
 import { listEvents, type EventWithCount } from '../../src/db/events';
+import { listTags, type TagRow } from '../../src/db/tags';
 import { colors, interestMeta, radius, type InterestLevel } from '../../src/theme';
 import type { ContactListItem } from '../../src/db/contacts';
 
 type InterestFilter = 'all' | InterestLevel;
+type SortKey = 'date_met_desc' | 'company_asc' | 'interest';
+type ExtraFilter = 'all' | 'follow_up' | 'drafts';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  date_met_desc: 'Recent',
+  company_asc: 'A→Z',
+  interest: 'Interest',
+};
 
 function groupOf(iso: string): 'today' | 'week' | 'earlier' {
   const d = new Date(iso);
@@ -54,21 +63,54 @@ export default function ContactsScreen() {
   const [eventSheet, setEventSheet] = useState(false);
   const [eventQuery, setEventQuery] = useState('');
   const [events, setEvents] = useState<EventWithCount[]>([]);
+  const [tags, setTags] = useState<TagRow[]>([]);
+  const [tagIds, setTagIds] = useState<number[]>([]);
+  const [tagSheet, setTagSheet] = useState(false);
+  const [sort, setSort] = useState<SortKey>('date_met_desc');
+  const [sortSheet, setSortSheet] = useState(false);
+  const [extra, setExtra] = useState<ExtraFilter>('all');
   const [stats, setStats] = useState<AccountStats>(EMPTY);
 
   const loadStats = useCallback(async () => {
     setStats(await getAccountStats());
     setEvents(await listEvents());
+    setTags(await listTags());
   }, []);
   useEffect(() => { void loadStats(); }, [loadStats]);
   useFocusEffect(useCallback(() => { void loadStats(); }, [loadStats]));
 
-  const { data } = useContacts({
+  const { data: rawData } = useContacts({
     search,
     interest: interest === 'all' ? null : interest,
     event_id: eventId,
-    sort: 'date_met_desc',
+    tag_ids: tagIds,
+    only_incomplete: extra === 'drafts' ? true : undefined,
+    sort,
   });
+
+  const data = useMemo(() => {
+    if (extra === 'follow_up') return rawData.filter((c) => c.follow_up_date && !c.follow_up_done);
+    return rawData;
+  }, [rawData, extra]);
+
+  function toggleTag(id: number) {
+    setTagIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function clearAllFilters() {
+    setInterest('all');
+    setEventId(null);
+    setTagIds([]);
+    setExtra('all');
+    setSort('date_met_desc');
+    setSearch('');
+  }
+
+  const activeFilterCount =
+    (interest !== 'all' ? 1 : 0) +
+    (eventId != null ? 1 : 0) +
+    tagIds.length +
+    (extra !== 'all' ? 1 : 0);
 
   const selectedEvent = eventId == null ? null : events.find((e) => e.id === eventId) ?? null;
 
@@ -198,6 +240,49 @@ export default function ContactsScreen() {
             <Chip label="Hot" dot={colors.hotDot} count={stats.hot} active={interest === 'hot'} onPress={() => setInterest('hot')} />
             <Chip label="Warm" dot={colors.warmDot} count={stats.warm} active={interest === 'warm'} onPress={() => setInterest('warm')} />
             <Chip label="Cold" dot={colors.coldDot} count={stats.cold} active={interest === 'cold'} onPress={() => setInterest('cold')} />
+            {tags.length > 0 && (
+              <Pressable
+                onPress={() => setTagSheet(true)}
+                style={[styles.chip, tagIds.length > 0 && styles.chipActive]}
+                hitSlop={4}
+              >
+                <Icon name="pricetags-outline" size={12} color={tagIds.length > 0 ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.chipLabel, tagIds.length > 0 && styles.chipLabelActive]}>
+                  {tagIds.length > 0 ? `Tags (${tagIds.length})` : 'Tags'}
+                </Text>
+                <Icon name="chevron-down" size={11} color={tagIds.length > 0 ? colors.primary : colors.textTertiary} />
+              </Pressable>
+            )}
+            <Pressable
+              onPress={() => setExtra(extra === 'follow_up' ? 'all' : 'follow_up')}
+              style={[styles.chip, extra === 'follow_up' && styles.chipActive]}
+              hitSlop={4}
+            >
+              <Icon name="alarm-outline" size={12} color={extra === 'follow_up' ? colors.primary : colors.textSecondary} />
+              <Text style={[styles.chipLabel, extra === 'follow_up' && styles.chipLabelActive]}>Follow-up</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setExtra(extra === 'drafts' ? 'all' : 'drafts')}
+              style={[styles.chip, extra === 'drafts' && styles.chipActive]}
+              hitSlop={4}
+            >
+              <Icon name="create-outline" size={12} color={extra === 'drafts' ? colors.primary : colors.textSecondary} />
+              <Text style={[styles.chipLabel, extra === 'drafts' && styles.chipLabelActive]}>Drafts</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setSortSheet(true)}
+              style={[styles.chip]}
+              hitSlop={4}
+            >
+              <Icon name="swap-vertical-outline" size={12} color={colors.textSecondary} />
+              <Text style={styles.chipLabel}>{SORT_LABELS[sort]}</Text>
+              <Icon name="chevron-down" size={11} color={colors.textTertiary} />
+            </Pressable>
+            {activeFilterCount > 0 && (
+              <Pressable onPress={clearAllFilters} style={[styles.chip, styles.chipClear]} hitSlop={4}>
+                <Text style={styles.chipClearText}>Clear</Text>
+              </Pressable>
+            )}
           </ScrollView>
         </View>
 
@@ -224,6 +309,55 @@ export default function ContactsScreen() {
         )}
       </ScrollView>
       <FAB onPress={() => router.push('/contact/new')} />
+
+      <Modal visible={tagSheet} transparent animationType="fade" onRequestClose={() => setTagSheet(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setTagSheet(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Filter by tags</Text>
+            <ScrollView style={{ maxHeight: 380 }}>
+              {tags.map((t) => {
+                const selected = tagIds.includes(t.id);
+                return (
+                  <Pressable key={t.id} onPress={() => toggleTag(t.id)} style={styles.pickerRow}>
+                    <View style={[styles.tagDot, { backgroundColor: t.color }]} />
+                    <Text style={[styles.pickerLabel, selected && { color: colors.primary, fontWeight: '700' }]}>
+                      {t.name}
+                    </Text>
+                    {selected && <Icon name="checkmark" size={16} color={colors.primary} />}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {tagIds.length > 0 && (
+              <Pressable onPress={() => setTagIds([])} style={styles.sheetClear}>
+                <Text style={styles.sheetClearText}>Clear selection</Text>
+              </Pressable>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={sortSheet} transparent animationType="fade" onRequestClose={() => setSortSheet(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setSortSheet(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Sort by</Text>
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+              <Pressable
+                key={k}
+                onPress={() => { setSort(k); setSortSheet(false); }}
+                style={styles.pickerRow}
+              >
+                <Text style={[styles.pickerLabel, sort === k && { color: colors.primary, fontWeight: '700' }]}>
+                  {SORT_LABELS[k]}
+                </Text>
+                {sort === k && <Icon name="checkmark" size={16} color={colors.primary} />}
+              </Pressable>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal visible={eventSheet} transparent animationType="fade" onRequestClose={() => setEventSheet(false)}>
         <Pressable style={styles.backdrop} onPress={() => setEventSheet(false)}>
@@ -374,4 +508,9 @@ const styles = StyleSheet.create({
   },
   pickerLabel: { flex: 1, fontSize: 15, color: colors.textPrimary },
   pickerCount: { fontSize: 12, fontWeight: '700', color: colors.textTertiary, fontVariant: ['tabular-nums'] },
+  chipClear: { backgroundColor: 'transparent', borderColor: 'transparent' },
+  chipClearText: { fontSize: 12, fontWeight: '700', color: colors.danger },
+  tagDot: { width: 10, height: 10, borderRadius: 5 },
+  sheetClear: { paddingVertical: 12, alignItems: 'center', marginTop: 6 },
+  sheetClearText: { color: colors.danger, fontWeight: '600', fontSize: 13 },
 });
