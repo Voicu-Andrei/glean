@@ -1,17 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { getActiveEvent, type EventRow } from '../db/events';
 
 export function useActiveEvent() {
   const [event, setEvent] = useState<EventRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const reload = useCallback(async () => {
-    setLoading(true);
+    if (mountedRef.current) setLoading(true);
     try {
-      setEvent(await getActiveEvent());
+      const next = await getActiveEvent();
+      if (mountedRef.current) setEvent(next);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 

@@ -20,16 +20,28 @@ import { Icon } from '../../src/components/Icon';
 import { useActiveEvent } from '../../src/hooks/useActiveEvent';
 import { createContact } from '../../src/db/contacts';
 import { addPhoto } from '../../src/db/photos';
-import { listEvents, setActiveEvent, type EventWithCount } from '../../src/db/events';
+import { listEvents, type EventWithCount } from '../../src/db/events';
 import { colors, radius, elevation, typography, type InterestLevel } from '../../src/theme';
 import { success, warning } from '../../src/utils/haptics';
 
 export default function NewContactScreen() {
   const router = useRouter();
-  const { event: activeEvent, reload: reloadActive } = useActiveEvent();
+  const { event: activeEvent } = useActiveEvent();
   const [eventSheet, setEventSheet] = useState(false);
   const [events, setEvents] = useState<EventWithCount[]>([]);
   useEffect(() => { void listEvents().then(setEvents); }, []);
+
+  // Per-contact override of the active event. undefined = use the global
+  // activeEvent. null = save unfiled. number = pick a specific event WITHOUT
+  // touching the org-wide active flag.
+  const [eventOverride, setEventOverride] = useState<number | null | undefined>(undefined);
+  const selectedEventId: number | null =
+    eventOverride === undefined ? (activeEvent?.id ?? null) : eventOverride;
+  const selectedEvent =
+    selectedEventId == null
+      ? null
+      : (events.find((e) => e.id === selectedEventId)
+          ?? (activeEvent?.id === selectedEventId ? activeEvent : null));
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [role, setRole] = useState('');
@@ -54,10 +66,11 @@ export default function NewContactScreen() {
     setPendingPhotoUri(result.assets[0].uri);
   }
 
-  async function pickEvent(eventId: number | null) {
-    await setActiveEvent(eventId);
-    await reloadActive();
-    setEvents(await listEvents());
+  function pickEvent(eventId: number | null) {
+    // Only override THIS contact's event. We deliberately do NOT call
+    // setActiveEvent — touching the global active flag from a per-contact
+    // attach sheet would silently retarget every future capture.
+    setEventOverride(eventId);
     setEventSheet(false);
   }
 
@@ -65,7 +78,7 @@ export default function NewContactScreen() {
     setSaving(true);
     try {
       const id = await createContact({
-        event_id: activeEvent?.id ?? null,
+        event_id: selectedEventId,
         company_name: companyName,
         contact_name: contactName.trim() || null,
         role: role.trim() || null,
@@ -94,7 +107,7 @@ export default function NewContactScreen() {
       Alert.alert('Company name required', 'Add at least a company name to save.');
       return;
     }
-    if (!activeEvent) {
+    if (selectedEventId == null) {
       Alert.alert(
         'Save without an event?',
         `${companyName.trim()} won't be attached to any event. You can attach it later from the contact's detail screen.`,
@@ -125,7 +138,7 @@ export default function NewContactScreen() {
             <Text style={[styles.headerSave, saving && { opacity: 0.5 }]}>Save</Text>
           </Pressable>
         </View>
-        <ActiveEventBanner event={activeEvent} onPress={() => setEventSheet(true)} />
+        <ActiveEventBanner event={selectedEvent} onPress={() => setEventSheet(true)} />
 
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -268,28 +281,29 @@ export default function NewContactScreen() {
             <Text style={styles.pickerTitle}>Attach to event</Text>
             <ScrollView style={{ maxHeight: 420 }}>
               <Pressable
-                onPress={() => void pickEvent(null)}
+                onPress={() => pickEvent(null)}
                 style={styles.pickerRow}
               >
-                <Text style={[styles.pickerLabel, !activeEvent && { color: colors.primary, fontWeight: '700' }]}>
+                <Text style={[styles.pickerLabel, selectedEventId == null && { color: colors.primary, fontWeight: '700' }]}>
                   No event
                 </Text>
-                {!activeEvent && <Icon name="checkmark" size={16} color={colors.primary} />}
+                {selectedEventId == null && <Icon name="checkmark" size={16} color={colors.primary} />}
               </Pressable>
               {events.map((e) => (
                 <Pressable
                   key={e.id}
-                  onPress={() => void pickEvent(e.id)}
+                  onPress={() => pickEvent(e.id)}
                   style={styles.pickerRow}
                 >
                   <Text
-                    style={[styles.pickerLabel, activeEvent?.id === e.id && { color: colors.primary, fontWeight: '700' }]}
+                    style={[styles.pickerLabel, selectedEventId === e.id && { color: colors.primary, fontWeight: '700' }]}
                     numberOfLines={1}
                   >
                     {e.name}
+                    {activeEvent?.id === e.id ? '  · active' : ''}
                   </Text>
                   <Text style={styles.pickerCount}>{e.contact_count}</Text>
-                  {activeEvent?.id === e.id && <Icon name="checkmark" size={16} color={colors.primary} />}
+                  {selectedEventId === e.id && <Icon name="checkmark" size={16} color={colors.primary} />}
                 </Pressable>
               ))}
               <Pressable

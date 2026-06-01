@@ -45,7 +45,15 @@ export async function getActiveEvent(): Promise<EventRow | null> {
   return row ?? null;
 }
 
+function assertEndAfterStart(start: string, end: string | null | undefined): void {
+  if (!end) return;
+  if (new Date(end).getTime() < new Date(start).getTime()) {
+    throw new Error('End date must be on or after the start date.');
+  }
+}
+
 export async function createEvent(input: NewEventInput): Promise<number> {
+  assertEndAfterStart(input.start_date, input.end_date);
   const db = await getDb();
   let newId = 0;
   await db.withTransactionAsync(async () => {
@@ -68,6 +76,16 @@ export async function createEvent(input: NewEventInput): Promise<number> {
 }
 
 export async function updateEvent(id: number, patch: Partial<NewEventInput>): Promise<void> {
+  // If both dates are being patched, validate against the new pair.
+  // If only one is patched, validate against the persisted partner.
+  if (patch.start_date !== undefined || patch.end_date !== undefined) {
+    const existing = patch.start_date === undefined || patch.end_date === undefined
+      ? await getEvent(id)
+      : null;
+    const start = patch.start_date ?? existing?.start_date ?? null;
+    const end = patch.end_date === undefined ? existing?.end_date ?? null : patch.end_date;
+    if (start) assertEndAfterStart(start, end);
+  }
   const db = await getDb();
   const fields: string[] = [];
   const values: (string | number | null)[] = [];

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { getDb } from '../db';
 import type { EventRow } from '../db/events';
@@ -70,9 +70,11 @@ function dayIndex(start: string): number | null {
 export function useDashboard() {
   const [stats, setStats] = useState<DashboardStats>(EMPTY);
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const reload = useCallback(async () => {
-    setLoading(true);
+    if (mountedRef.current) setLoading(true);
     try {
       const db = await getDb();
       const totals = await db.getFirstAsync<{
@@ -148,6 +150,7 @@ export function useDashboard() {
          ORDER BY c.created_at DESC LIMIT 5;`,
       );
 
+      if (!mountedRef.current) return;
       setStats({
         totalContacts: totals?.total ?? 0,
         hotCount: totals?.hot ?? 0,
@@ -165,7 +168,7 @@ export function useDashboard() {
         topHot,
       });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 

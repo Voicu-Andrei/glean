@@ -179,7 +179,11 @@ export async function exportContactsZip(opts: { eventId?: number | null; eventNa
       // skip unreadable
     }
   }
-  const MAX_ZIP_BYTES = 40 * 1024 * 1024; // 40 MB
+  // 15 MB cap. Base64 inflates ~1.33x, JSZip holds the tree in memory, and
+  // generateAsync materialises the final archive as another base64 string
+  // before we write it — peak heap is 3-4x raw. 15 MB raw keeps the spike
+  // under ~60 MB which is safer on older iPhones.
+  const MAX_ZIP_BYTES = 15 * 1024 * 1024;
   if (totalBytes > MAX_ZIP_BYTES) {
     const mb = Math.round(totalBytes / 1024 / 1024);
     throw new Error(
