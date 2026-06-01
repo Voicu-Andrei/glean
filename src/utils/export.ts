@@ -138,7 +138,9 @@ export async function exportContactsCsv(opts: { eventId?: number | null; eventNa
   const photoCount = new Map<number, number>();
   photos.forEach((p) => photoCount.set(p.contact_id, (photoCount.get(p.contact_id) ?? 0) + 1));
 
-  const csv = [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\n');
+  // RFC 4180 line endings + UTF-8 BOM so non-ASCII (German umlauts etc) opens
+  // correctly in Excel on Windows.
+  const csv = '﻿' + [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\r\n');
   const base = opts.eventName ? sanitizeFilename(opts.eventName) : 'all_contacts';
   const stamp = new Date().toISOString().slice(0, 10);
   const fileUri = `${FileSystem.cacheDirectory}glean_${base}_${stamp}.csv`;
@@ -165,8 +167,30 @@ export async function exportContactsZip(opts: { eventId?: number | null; eventNa
   const photoCount = new Map<number, number>();
   photos.forEach((p) => photoCount.set(p.contact_id, (photoCount.get(p.contact_id) ?? 0) + 1));
 
+  // Estimate total photo bytes BEFORE base64-encoding anything. base64 is
+  // ~1.33x the raw size and JSZip holds the whole archive in memory before
+  // we write it out. Anything north of 40 MB raw is likely to OOM the app.
+  let totalBytes = 0;
+  for (const p of photos) {
+    try {
+      const info = await FileSystem.getInfoAsync(fullPathFor(p.file_path));
+      if (info.exists && 'size' in info && typeof info.size === 'number') totalBytes += info.size;
+    } catch {
+      // skip unreadable
+    }
+  }
+  const MAX_ZIP_BYTES = 40 * 1024 * 1024; // 40 MB
+  if (totalBytes > MAX_ZIP_BYTES) {
+    const mb = Math.round(totalBytes / 1024 / 1024);
+    throw new Error(
+      `Archive too large (~${mb} MB of photos). Export per-event instead, or use 'CSV only' to skip photos.`,
+    );
+  }
+
   const zip = new JSZip();
-  const csv = [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\n');
+  // RFC 4180 line endings + UTF-8 BOM so non-ASCII (German umlauts etc) opens
+  // correctly in Excel on Windows.
+  const csv = '﻿' + [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\r\n');
   zip.file('contacts.csv', csv);
 
   const photoIndex: string[] = ['Filename,Contact ID,Company,Contact Name,Type,Label'];

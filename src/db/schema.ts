@@ -39,21 +39,6 @@ CREATE TABLE IF NOT EXISTS contacts (
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-DROP VIEW IF EXISTS contacts_with_completeness;
-CREATE VIEW contacts_with_completeness AS
-SELECT c.*,
-  CASE WHEN
-       c.marked_complete = 1
-       OR (
-         c.company_name IS NOT NULL AND length(trim(c.company_name)) > 0
-         AND c.contact_name IS NOT NULL AND length(trim(c.contact_name)) > 0
-         AND ((c.email IS NOT NULL AND length(trim(c.email)) > 0)
-              OR (c.phone IS NOT NULL AND length(trim(c.phone)) > 0))
-         AND c.interest_level IS NOT NULL
-       )
-       THEN 1 ELSE 0 END AS is_complete
-FROM contacts c;
-
 CREATE TABLE IF NOT EXISTS photos (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     contact_id   INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
@@ -85,6 +70,27 @@ CREATE INDEX IF NOT EXISTS idx_contacts_event_id ON contacts(event_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_interest_level ON contacts(interest_level);
 CREATE INDEX IF NOT EXISTS idx_contact_tags_tag_id ON contact_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_photos_contact_id ON photos(contact_id);
+`;
+
+/**
+ * View body kept separate so migrate() can drop+recreate it AFTER the
+ * required columns are guaranteed to exist on older DBs.
+ */
+export const COMPLETENESS_VIEW_SQL = `
+DROP VIEW IF EXISTS contacts_with_completeness;
+CREATE VIEW contacts_with_completeness AS
+SELECT c.*,
+  CASE WHEN
+       c.marked_complete = 1
+       OR (
+         c.company_name IS NOT NULL AND length(trim(c.company_name)) > 0
+         AND c.contact_name IS NOT NULL AND length(trim(c.contact_name)) > 0
+         AND ((c.email IS NOT NULL AND length(trim(c.email)) > 0)
+              OR (c.phone IS NOT NULL AND length(trim(c.phone)) > 0))
+         AND c.interest_level IS NOT NULL
+       )
+       THEN 1 ELSE 0 END AS is_complete
+FROM contacts c;
 `;
 
 export const SEED_TAGS: Array<{ name: string; color: string }> = [

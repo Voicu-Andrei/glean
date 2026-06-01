@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -19,12 +20,16 @@ import { Icon } from '../../src/components/Icon';
 import { useActiveEvent } from '../../src/hooks/useActiveEvent';
 import { createContact } from '../../src/db/contacts';
 import { addPhoto } from '../../src/db/photos';
+import { listEvents, setActiveEvent, type EventWithCount } from '../../src/db/events';
 import { colors, radius, elevation, typography, type InterestLevel } from '../../src/theme';
 import { success, warning } from '../../src/utils/haptics';
 
 export default function NewContactScreen() {
   const router = useRouter();
-  const { event: activeEvent } = useActiveEvent();
+  const { event: activeEvent, reload: reloadActive } = useActiveEvent();
+  const [eventSheet, setEventSheet] = useState(false);
+  const [events, setEvents] = useState<EventWithCount[]>([]);
+  useEffect(() => { void listEvents().then(setEvents); }, []);
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [role, setRole] = useState('');
@@ -49,12 +54,14 @@ export default function NewContactScreen() {
     setPendingPhotoUri(result.assets[0].uri);
   }
 
-  async function onSave() {
-    if (!companyName.trim()) {
-      warning();
-      Alert.alert('Company name required', 'Add at least a company name to save.');
-      return;
-    }
+  async function pickEvent(eventId: number | null) {
+    await setActiveEvent(eventId);
+    await reloadActive();
+    setEvents(await listEvents());
+    setEventSheet(false);
+  }
+
+  async function doSave() {
     setSaving(true);
     try {
       const id = await createContact({
@@ -68,7 +75,6 @@ export default function NewContactScreen() {
         what_they_sell: whatTheySell.trim() || null,
         notes: note.trim() || null,
         interest_level: interest,
-        // date_met defaults to today via SQL — let it
       });
       if (pendingPhotoUri) {
         await addPhoto(id, 'business_card', pendingPhotoUri);
@@ -81,6 +87,28 @@ export default function NewContactScreen() {
       setSaving(false);
     }
   }
+
+  async function onSave() {
+    if (!companyName.trim()) {
+      warning();
+      Alert.alert('Company name required', 'Add at least a company name to save.');
+      return;
+    }
+    if (!activeEvent) {
+      Alert.alert(
+        'Save without an event?',
+        `${companyName.trim()} won't be attached to any event. You can attach it later from the contact's detail screen.`,
+        [
+          { text: 'Attach to event', onPress: () => setEventSheet(true) },
+          { text: 'Save unfiled', style: 'destructive', onPress: () => void doSave() },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+      return;
+    }
+    await doSave();
+  }
+
 
   return (
     <Screen style={styles.flex}>
@@ -97,7 +125,7 @@ export default function NewContactScreen() {
             <Text style={[styles.headerSave, saving && { opacity: 0.5 }]}>Save</Text>
           </Pressable>
         </View>
-        <ActiveEventBanner event={activeEvent} />
+        <ActiveEventBanner event={activeEvent} onPress={() => setEventSheet(true)} />
 
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -232,6 +260,49 @@ export default function NewContactScreen() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal visible={eventSheet} transparent animationType="fade" onRequestClose={() => setEventSheet(false)}>
+        <Pressable style={styles.pickerBackdrop} onPress={() => setEventSheet(false)}>
+          <Pressable style={styles.pickerSheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.pickerHandle} />
+            <Text style={styles.pickerTitle}>Attach to event</Text>
+            <ScrollView style={{ maxHeight: 420 }}>
+              <Pressable
+                onPress={() => void pickEvent(null)}
+                style={styles.pickerRow}
+              >
+                <Text style={[styles.pickerLabel, !activeEvent && { color: colors.primary, fontWeight: '700' }]}>
+                  No event
+                </Text>
+                {!activeEvent && <Icon name="checkmark" size={16} color={colors.primary} />}
+              </Pressable>
+              {events.map((e) => (
+                <Pressable
+                  key={e.id}
+                  onPress={() => void pickEvent(e.id)}
+                  style={styles.pickerRow}
+                >
+                  <Text
+                    style={[styles.pickerLabel, activeEvent?.id === e.id && { color: colors.primary, fontWeight: '700' }]}
+                    numberOfLines={1}
+                  >
+                    {e.name}
+                  </Text>
+                  <Text style={styles.pickerCount}>{e.contact_count}</Text>
+                  {activeEvent?.id === e.id && <Icon name="checkmark" size={16} color={colors.primary} />}
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => { setEventSheet(false); router.push('/event/new'); }}
+                style={[styles.pickerRow, { borderBottomWidth: 0 }]}
+              >
+                <Icon name="add" size={16} color={colors.primary} />
+                <Text style={[styles.pickerLabel, { color: colors.primary, fontWeight: '600' }]}>New event…</Text>
+              </Pressable>
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -297,4 +368,18 @@ const styles = StyleSheet.create({
     ...elevation.fab,
   },
   saveLabel: { color: colors.surface, fontSize: 16, fontWeight: '700' },
+
+  pickerBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  pickerSheet: {
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    paddingTop: 10, paddingBottom: 28, paddingHorizontal: 18,
+  },
+  pickerHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 12 },
+  pickerTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  pickerRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 14, borderBottomWidth: 1, borderColor: colors.borderSoft,
+  },
+  pickerLabel: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  pickerCount: { fontSize: 12, fontWeight: '700', color: colors.textTertiary, fontVariant: ['tabular-nums'] },
 });

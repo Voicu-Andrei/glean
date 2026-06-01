@@ -88,10 +88,20 @@ export default function NewEventScreen() {
             <TextInput value={location} onChangeText={setLocation} style={styles.input} placeholder="Paris" placeholderTextColor={colors.textSecondary} autoCapitalize="words" />
           </Field>
           <Field label="Starts *">
-            <DateField value={startDate} onChange={setStartDate} mode="datetime" placeholder="Pick a date & time" />
+            <DateField
+              value={startDate}
+              onChange={(v) => {
+                setStartDate(v);
+                // Prefill end as same-day (single-day event) when first picking
+                // a start. User can extend to multi-day or clear via the picker.
+                if (v && !endDate) setEndDate(v);
+              }}
+              mode="datetime"
+              placeholder="Pick a date & time"
+            />
           </Field>
           <Field label="Ends">
-            <DateField value={endDate} onChange={setEndDate} mode="datetime" placeholder="Optional" optional />
+            <DateField value={endDate} onChange={setEndDate} mode="datetime" placeholder="Same day" optional />
           </Field>
           <Field label="Notes">
             <TextInput value={notes} onChangeText={setNotes} style={[styles.input, styles.multiline]} multiline />

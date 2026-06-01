@@ -188,20 +188,6 @@ export async function updateContact(id: number, patch: Partial<NewContactInput>)
   await db.runAsync(`UPDATE contacts SET ${fields.join(', ')} WHERE id = ?;`, ...values);
 }
 
-export async function cycleInterest(id: number): Promise<InterestLevel | null> {
-  const current = await getContact(id);
-  if (!current) return null;
-  const order: (InterestLevel | null)[] = ['hot', 'warm', 'cold', null];
-  const idx = order.indexOf(current.interest_level);
-  const next = order[(idx + 1) % order.length];
-  const db = await getDb();
-  await db.runAsync(
-    "UPDATE contacts SET interest_level = ?, updated_at = datetime('now') WHERE id = ?;",
-    next,
-    id,
-  );
-  return next;
-}
 
 export async function markComplete(id: number, value: boolean): Promise<void> {
   const db = await getDb();

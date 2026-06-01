@@ -160,7 +160,7 @@ export default function DraftsScreen() {
                           </Pressable>
                           <Pressable onPress={() => void onGood(d)} style={[styles.actBtn, styles.actGhost]} hitSlop={4}>
                             <Icon name="checkmark" size={12} color={colors.textSecondary} />
-                            <Text style={styles.actGhostText}>Good as is</Text>
+                            <Text style={styles.actGhostText}>Skip for now</Text>
                           </Pressable>
                         </View>
                       </View>

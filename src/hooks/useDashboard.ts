@@ -102,12 +102,16 @@ export function useDashboard() {
 
       const hourlyCaptures = new Array(24).fill(0);
       if (activeEvent) {
+        // Use created_at (always a full datetime) for hourly. date_met is
+        // often date-only via the SQL default and strftime('%H','YYYY-MM-DD')
+        // returns '00' for every row, which collapses the bars to 9am.
         const rows = await db.getAllAsync<{ hr: number; n: number }>(
-          `SELECT CAST(strftime('%H', date_met) AS INTEGER) AS hr, COUNT(*) AS n
-           FROM contacts
-           WHERE event_id = ?
-             AND date(date_met) = date('now', 'localtime')
-           GROUP BY hr;`,
+          `SELECT CAST(strftime('%H', created_at, 'localtime') AS INTEGER) AS hr,
+                  COUNT(*) AS n
+             FROM contacts
+            WHERE event_id = ?
+              AND date(created_at, 'localtime') = date('now', 'localtime')
+            GROUP BY hr;`,
           activeEvent.id,
         );
         rows.forEach((r) => { if (r.hr >= 0 && r.hr < 24) hourlyCaptures[r.hr] = r.n; });

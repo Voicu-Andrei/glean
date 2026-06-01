@@ -6,6 +6,8 @@ import { Icon } from './Icon';
 
 type Props = {
   event: EventRow | null;
+  /** Optional tap-handler override (default: route to Events tab). */
+  onPress?: () => void;
 };
 
 function formatRange(start: string | null | undefined, end: string | null | undefined): string {
@@ -20,9 +22,9 @@ function formatRange(start: string | null | undefined, end: string | null | unde
   return `${months[s.getMonth()]} ${s.getDate()} – ${months[e.getMonth()]} ${e.getDate()}`;
 }
 
-export function ActiveEventBanner({ event }: Props) {
+export function ActiveEventBanner({ event, onPress: onPressOverride }: Props) {
   const router = useRouter();
-  const onPress = () => router.push('/(tabs)/events');
+  const onPress = onPressOverride ?? (() => router.push('/(tabs)/events'));
 
   if (!event) {
     return (
@@ -31,8 +33,8 @@ export function ActiveEventBanner({ event }: Props) {
           <Icon name="calendar-outline" size={16} color={colors.textSecondary} />
         </View>
         <View style={styles.body}>
-          <Text style={styles.labelDim}>NO ACTIVE EVENT</Text>
-          <Text style={styles.textDim}>Tap to pick one before capturing</Text>
+          <Text style={styles.labelDim}>NOT ATTACHED TO AN EVENT</Text>
+          <Text style={styles.textDim}>Tap to attach — or this contact will save unfiled</Text>
         </View>
         <Icon name="chevron-forward" size={16} color={colors.textTertiary} />
       </Pressable>

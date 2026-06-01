@@ -84,12 +84,21 @@ export async function updateEvent(id: number, patch: Partial<NewEventInput>): Pr
 
 export async function setActiveEvent(id: number | null): Promise<void> {
   const db = await getDb();
-  await db.withTransactionAsync(async () => {
-    await db.runAsync('UPDATE events SET is_active = 0 WHERE is_active = 1;');
-    if (id !== null) {
-      await db.runAsync('UPDATE events SET is_active = 1 WHERE id = ?;', id);
-    }
-  });
+  // Single atomic write so we can't race the partial unique index even if
+  // autoBalanceActiveEvent is firing concurrently from a useFocusEffect.
+  if (id === null) {
+    await db.runAsync(
+      "UPDATE events SET is_active = 0, updated_at = datetime('now') WHERE is_active = 1;",
+    );
+    return;
+  }
+  await db.runAsync(
+    `UPDATE events
+       SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END,
+           updated_at = datetime('now')
+     WHERE is_active = 1 OR id = ?;`,
+    id, id,
+  );
 }
 
 export async function deleteEvent(id: number): Promise<void> {

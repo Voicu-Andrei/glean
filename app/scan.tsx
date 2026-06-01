@@ -58,7 +58,8 @@ export default function ScanScreen() {
         website: parsed.website || null,
         notes: parsed.notes || null,
         interest_level: 'warm',
-        date_met: active?.start_date,
+        // date_met defaults to today via SQL — don't backdate to the event's
+        // start_date or hourly/daily stats will misreport.
       });
       success();
       Alert.alert(
