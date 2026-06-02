@@ -140,7 +140,7 @@ export async function exportContactsCsv(opts: { eventId?: number | null; eventNa
 
   // RFC 4180 line endings + UTF-8 BOM so non-ASCII (German umlauts etc) opens
   // correctly in Excel on Windows.
-  const csv = '﻿' + [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\r\n');
+  const csv = '\uFEFF' + [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\r\n');
   const base = opts.eventName ? sanitizeFilename(opts.eventName) : 'all_contacts';
   const stamp = new Date().toISOString().slice(0, 10);
   const fileUri = `${FileSystem.cacheDirectory}glean_${base}_${stamp}.csv`;
@@ -169,7 +169,7 @@ export async function exportContactsZip(opts: { eventId?: number | null; eventNa
 
   // Estimate total photo bytes BEFORE base64-encoding anything. base64 is
   // ~1.33x the raw size and JSZip holds the whole archive in memory before
-  // we write it out. Anything north of 40 MB raw is likely to OOM the app.
+  // we write it out — see the MAX_ZIP_BYTES comment below for the budget.
   let totalBytes = 0;
   for (const p of photos) {
     try {
@@ -194,7 +194,7 @@ export async function exportContactsZip(opts: { eventId?: number | null; eventNa
   const zip = new JSZip();
   // RFC 4180 line endings + UTF-8 BOM so non-ASCII (German umlauts etc) opens
   // correctly in Excel on Windows.
-  const csv = '﻿' + [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\r\n');
+  const csv = '\uFEFF' + [HEADERS.join(','), ...rows.map((r) => rowToCsv(r, photoCount.get(r.id) ?? 0))].join('\r\n');
   zip.file('contacts.csv', csv);
 
   const photoIndex: string[] = ['Filename,Contact ID,Company,Contact Name,Type,Label'];

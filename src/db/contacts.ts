@@ -60,19 +60,23 @@ export async function listContacts(filters: ContactFilters = {}): Promise<Contac
   const params: (string | number)[] = [];
 
   if (filters.search && filters.search.trim().length > 0) {
-    const q = `%${filters.search.trim().toLowerCase()}%`;
+    // Escape SQL LIKE wildcards (% and _) and the escape char itself so a
+    // user typing "50%" or "snake_case" doesn't match everything.
+    const raw = filters.search.trim().toLowerCase();
+    const escaped = raw.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+    const q = `%${escaped}%`;
     where.push(`(
-      lower(c.company_name) LIKE ?
-      OR lower(coalesce(c.contact_name, '')) LIKE ?
-      OR lower(coalesce(c.role, '')) LIKE ?
-      OR lower(coalesce(c.email, '')) LIKE ?
-      OR lower(coalesce(c.phone, '')) LIKE ?
-      OR lower(coalesce(c.notes, '')) LIKE ?
-      OR lower(coalesce(c.what_they_sell, '')) LIKE ?
+      lower(c.company_name) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(c.contact_name, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(c.role, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(c.email, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(c.phone, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(c.notes, '')) LIKE ? ESCAPE '\\'
+      OR lower(coalesce(c.what_they_sell, '')) LIKE ? ESCAPE '\\'
       OR EXISTS (
         SELECT 1 FROM contact_tags ct
         JOIN tags t ON t.id = ct.tag_id
-        WHERE ct.contact_id = c.id AND lower(t.name) LIKE ?
+        WHERE ct.contact_id = c.id AND lower(t.name) LIKE ? ESCAPE '\\'
       )
     )`);
     params.push(q, q, q, q, q, q, q, q);

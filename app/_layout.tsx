@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { enableScreens } from 'react-native-screens';
 import { getDb } from '../src/db';
 import { SplashAnimation } from '../src/components/SplashAnimation';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { colors } from '../src/theme';
 
 enableScreens(false);
@@ -52,7 +53,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" />
@@ -68,7 +69,7 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
         <Stack.Screen name="meetings" />
       </Stack>
-    </>
+    </ErrorBoundary>
   );
 }
 

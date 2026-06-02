@@ -57,26 +57,39 @@ export async function addPhoto(
   const absPath = `${FileSystem.documentDirectory}${relPath}`;
   await FileSystem.copyAsync({ from: sourceUri, to: absPath });
 
-  const db = await getDb();
-  const res = await db.runAsync(
-    `INSERT INTO photos (contact_id, photo_type, file_path, label, sort_order)
-     VALUES (?, ?, ?, ?, COALESCE((SELECT MAX(sort_order) + 1 FROM photos WHERE contact_id = ? AND photo_type = ?), 0));`,
-    contactId,
-    type,
-    relPath,
-    label,
-    contactId,
-    type,
-  );
-  return {
-    id: res.lastInsertRowId as number,
-    contact_id: contactId,
-    photo_type: type,
-    file_path: relPath,
-    label,
-    sort_order: 0,
-    created_at: new Date().toISOString(),
-  };
+  try {
+    const db = await getDb();
+    const res = await db.runAsync(
+      `INSERT INTO photos (contact_id, photo_type, file_path, label, sort_order)
+       VALUES (?, ?, ?, ?, COALESCE((SELECT MAX(sort_order) + 1 FROM photos WHERE contact_id = ? AND photo_type = ?), 0));`,
+      contactId,
+      type,
+      relPath,
+      label,
+      contactId,
+      type,
+    );
+    const id = res.lastInsertRowId as number;
+    // Read back the row so callers get the real sort_order instead of a stale 0.
+    const persisted = await db.getFirstAsync<PhotoRow>(
+      'SELECT * FROM photos WHERE id = ?;',
+      id,
+    );
+    return persisted ?? {
+      id,
+      contact_id: contactId,
+      photo_type: type,
+      file_path: relPath,
+      label,
+      sort_order: 0,
+      created_at: new Date().toISOString(),
+    };
+  } catch (e) {
+    // Roll back the on-disk copy so we don't accumulate orphaned files when
+    // the DB write fails (full disk, constraint violation, etc.).
+    await FileSystem.deleteAsync(absPath, { idempotent: true }).catch(() => {});
+    throw e;
+  }
 }
 
 export async function updatePhotoLabel(id: number, label: string | null): Promise<void> {

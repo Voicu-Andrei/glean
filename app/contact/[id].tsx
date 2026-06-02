@@ -94,9 +94,15 @@ export default function ContactDetailScreen() {
     : null;
 
   const actions = [
-    contact.phone ? { icon: 'call' as IconName, label: 'Call', onPress: () => void Linking.openURL(`tel:${contact.phone}`) } : null,
-    contact.email ? { icon: 'mail' as IconName, label: 'Email', onPress: () => void Linking.openURL(`mailto:${contact.email}`) } : null,
-    websiteUrl ? { icon: 'globe-outline' as IconName, label: 'Web', onPress: () => void Linking.openURL(websiteUrl!) } : null,
+    contact.phone ? { icon: 'call' as IconName, label: 'Call', onPress: () => {
+      // Strip everything except digits, +, *, # and pause/wait — what tel: accepts.
+      const safe = contact.phone!.replace(/[^0-9+*#,;p]/gi, '');
+      if (safe) void Linking.openURL(`tel:${safe}`);
+    } } : null,
+    contact.email ? { icon: 'mail' as IconName, label: 'Email', onPress: () => {
+      void Linking.openURL(`mailto:${encodeURIComponent(contact.email!)}`);
+    } } : null,
+    websiteUrl ? { icon: 'globe-outline' as IconName, label: 'Web', onPress: () => void Linking.openURL(websiteUrl) } : null,
   ].filter(Boolean) as Array<{ icon: IconName; label: string; onPress: () => void }>;
 
   return (

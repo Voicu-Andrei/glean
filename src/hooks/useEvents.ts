@@ -1,27 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { listEvents, type EventWithCount } from '../db/events';
 
 export function useEvents() {
   const [data, setData] = useState<EventWithCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const reload = useCallback(async () => {
-    setLoading(true);
+    if (mountedRef.current) setLoading(true);
     try {
-      setData(await listEvents());
+      const next = await listEvents();
+      if (mountedRef.current) setData(next);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  useFocusEffect(useCallback(() => {
-    void reload();
-  }, [reload]));
+  useEffect(() => { void reload(); }, [reload]);
+  useFocusEffect(useCallback(() => { void reload(); }, [reload]));
 
   return { data, loading, reload };
 }
