@@ -16,7 +16,9 @@ import {
   type Account,
   type AccountStats,
 } from '../../src/db/account';
+import * as DocumentPicker from 'expo-document-picker';
 import { exportContactsCsv, exportContactsZip } from '../../src/utils/export';
+import { importContactsCsv } from '../../src/utils/import';
 import { colors, radius, typography } from '../../src/theme';
 
 function registeredLabel(iso: string | null): string {
@@ -76,6 +78,47 @@ export default function AccountScreen() {
         { text: 'Cancel', style: 'cancel' },
       ],
     );
+  }
+
+  async function onImport() {
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'public.comma-separated-values-text', '*/*'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (picked.canceled || picked.assets.length === 0) return;
+      const uri = picked.assets[0].uri;
+
+      Alert.alert(
+        'Import contacts from CSV?',
+        'New contacts will be added to your library. Existing ones aren\'t modified. Events and tags referenced in the file will be created if they don\'t exist. Photos are not in a CSV — only fields.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Import',
+            onPress: async () => {
+              try {
+                const result = await importContactsCsv(uri);
+                const lines = [
+                  `${result.contacts} contact${result.contacts === 1 ? '' : 's'} added.`,
+                  result.events > 0 ? `${result.events} new event${result.events === 1 ? '' : 's'}.` : null,
+                  result.tags > 0 ? `${result.tags} new tag${result.tags === 1 ? '' : 's'}.` : null,
+                  result.skipped > 0 ? `${result.skipped} row${result.skipped === 1 ? '' : 's'} skipped.` : null,
+                  ...result.errors,
+                ].filter(Boolean).join('\n');
+                Alert.alert('Import complete', lines);
+                await reload();
+              } catch (e) {
+                Alert.alert('Import failed', e instanceof Error ? e.message : String(e));
+              }
+            },
+          },
+        ],
+      );
+    } catch (e) {
+      Alert.alert('Could not open file', e instanceof Error ? e.message : String(e));
+    }
   }
 
   function onResetProfile() {
@@ -223,6 +266,13 @@ export default function AccountScreen() {
             count={`${stats.contacts} rows`}
             color={colors.primary}
             onPress={chooseExport}
+          />
+          <ToolRow
+            icon="download-outline"
+            label="Import contacts from CSV"
+            sub="Restore from a Glean CSV export"
+            color={colors.primary}
+            onPress={onImport}
           />
           <ToolRow
             icon="information-circle-outline"
